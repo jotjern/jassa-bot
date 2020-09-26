@@ -32,7 +32,7 @@ async def jasså(ctx, args):
     filename = "output/"+name+".mp4"
     optimized ="output/optimized/"+name+".gif"
     
-    video = VideoFileClip(os.path.abspath("jassa_template.mp4")).subclip(0,3)
+    video = VideoFileClip(os.path.abspath("tmp/jassa_template.mp4")).subclip(0,3)
 
     txt_clip = ( TextClip(args,fontsize=32,color='white',font='ProximaNova-Semibold')
                  .set_position((155,655))
