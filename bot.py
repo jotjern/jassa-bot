@@ -34,8 +34,8 @@ async def jasså(ctx, args):
     
     video = VideoFileClip(os.path.abspath("tmp/jassa_template.mp4")).subclip(0,3)
 
-    txt_clip = ( TextClip(args,fontsize=32,color='white',font='ProximaNova-Semibold')
-                 .set_position((155,655))
+    txt_clip = ( TextClip(args,fontsize=32,color='white',font='ProximaNova-Semibold.otf')
+                 .set_position((160,655))
                  .set_duration(3) )
 
     result = CompositeVideoClip([video, txt_clip]) 
