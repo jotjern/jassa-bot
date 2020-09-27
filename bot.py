@@ -38,7 +38,7 @@ async def jasså(ctx, args):
         print("Gif allerede lagd, sender fil")
         await ctx.send(file=discord.File(optimized))
     else:
-        await ctx.send("Lager ny gif nå :)")
+        #await ctx.send("Lager ny gif nå :)")
         video = VideoFileClip(os.path.abspath("tmp/jassa_template.mp4")).subclip(0,3)
 
         txt_clip = ( TextClip(args,fontsize=33,color='white',font='ProximaNova-Semibold.otf')
