@@ -41,8 +41,6 @@ async def jasså(ctx, args):
     result = CompositeVideoClip([video, txt_clip]) 
     #result.write_gif(filename,fps=25, program='ffmpeg')
     result.write_videofile(filename)
-    # Old unoptimized
-    #os.system("ffmpeg -y -i "+filename+" -i tmp/palette.png -filter_complex paletteuse diff_mode -r 25 -s 540x960 "+optimized)
     # New better ffmpeg options
     os.system("ffmpeg -y -i "+filename+" -i tmp/palette.png -lavfi 'fps=19,scale=480:-1:flags=lanczos,paletteuse=dither=bayer:bayer_scale=5:diff_mode=rectangle' "+optimized)
     
