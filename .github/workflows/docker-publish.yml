@@ -80,7 +80,6 @@ jobs:
     needs: push
     
     runs-on: self-hosted
-    if: github.event_name == 'deploy'
 
     steps:
       - name: Rancher Deploy Action
