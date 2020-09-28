@@ -91,4 +91,5 @@ jobs:
           mkdir -p /root/.kube/ && touch /root/.kube/config
           echo ${{ secrets.KUBERNETES_KUBE_CONFIG}} | base64 -d > $KUBECONFIG
       - name: Running kubectl
-        run: kubectl apply -f kubernetes/deployment.yaml
+        run: |
+          kubectl apply -f kubernetes/deployment.yaml
