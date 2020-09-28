@@ -83,13 +83,11 @@ jobs:
     if: github.event_name == 'deploy'
 
     steps:
-      - uses: actions/checkout@v2
-
-      - name: Setting up before kubectl
-        run: |
-          sed -ie "s/deploy-date-value/$(date)/g" kubernetes/deployment.yaml
-          mkdir -p /root/.kube/ && touch /root/.kube/config
-          echo ${{ secrets.KUBERNETES_KUBE_CONFIG}} | base64 -d > $KUBECONFIG
-      - name: Running kubectl
-        run: |
-          kubectl apply -f kubernetes/deployment.yaml
+      - name: Rancher Deploy Action
+        uses: yantadeu/rancher-deploy-action@v0.0.2
+        env:
+          RANCHER_ACCESS_KEY: 'token-v7wcn'
+          RANCHER_SECRET_KEY: '${{ secrets.RANCHER_SECRET_KEY }}'
+          RANCHER_URL_API: 'https://192.168.1.103/v3'
+          SERVICE_NAME: 'jassa-bot'
+          DOCKER_IMAGE: 'jorgen1040/jassa-bot:latest'
