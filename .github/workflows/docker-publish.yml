@@ -16,6 +16,7 @@ on:
 env:
   # TODO: Change variable to your image's name.
   IMAGE_NAME: jassa-bot
+  KUBECONFIG: /root/.kube/config
 
 jobs:
   # Run tests.
@@ -75,3 +76,19 @@ jobs:
 
           docker tag $IMAGE_NAME $IMAGE_ID:$VERSION
           docker push $IMAGE_ID:$VERSION
+  deploy:
+    needs: push
+    
+    runs-on: self-hosted
+    if: github.event_name == 'deploy'
+
+    steps:
+      - uses: actions/checkout@v2
+
+      - name: Setting up before kubectl
+        run: |
+          sed -ie "s/deploy-date-value/$(date)/g" kubernetes/deployment.yaml
+          mkdir -p /root/.kube/ && touch /root/.kube/config
+          echo ${{ secrets.KUBERNETES_KUBE_CONFIG}} | base64 -d > $KUBECONFIG
+      - name: Running kubectl
+        run: kubectl apply -f kubernetes/deployment.yaml
