@@ -15,8 +15,7 @@ on:
 
 env:
   # TODO: Change variable to your image's name.
-  IMAGE_NAME: jassa-bot
-  KUBECONFIG: /root/.kube/config
+  #IMAGE_NAME: jassa-bot
 
 jobs:
   # Run tests.
@@ -49,7 +48,7 @@ jobs:
       - uses: actions/checkout@v2
 
       - name: Build image
-        run: docker build . --file Dockerfile --tag $IMAGE_NAME
+        run: docker build . --file Dockerfile --tag jassa-bot
 
       - name: Log into Dockerhub
       # TODO: Create a PAT with `read:packages` and `write:packages` scopes and save it as an Actions secret `CR_PAT`
@@ -57,7 +56,7 @@ jobs:
 
       - name: Push image to Dockerhub
         run: |
-          IMAGE_ID=${{ github.repository_owner }}/$IMAGE_NAME
+          IMAGE_ID=${{ github.repository_owner }}/jassa-bot
 
           # Change all uppercase to lowercase
           IMAGE_ID=$(echo $IMAGE_ID | tr '[A-Z]' '[a-z]')
@@ -74,7 +73,7 @@ jobs:
           echo IMAGE_ID=$IMAGE_ID
           echo VERSION=$VERSION
 
-          docker tag $IMAGE_NAME $IMAGE_ID:$VERSION
+          docker tag jassa-bot $IMAGE_ID:$VERSION
           docker push $IMAGE_ID:$VERSION
   deploy:
     needs: push
@@ -90,3 +89,4 @@ jobs:
           RANCHER_URL_API: 'http://192.168.1.103/v3'
           SERVICE_NAME: 'jassa-bot'
           DOCKER_IMAGE: 'jorgen1040/jassa-bot:latest'
+          VERIFY: False
