@@ -13,7 +13,7 @@ on:
   # Run tests for any PRs.
   pull_request:
 
-env:
+#env:
   # TODO: Change variable to your image's name.
   #IMAGE_NAME: jassa-bot
 
