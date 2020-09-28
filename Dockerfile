@@ -16,7 +16,8 @@ RUN apt-get update \
     && ldconfig /usr/local/lib \
     #&& make check \
     && cd .. \
-    && pip install -r requirements.txt
+    && pip install -r requirements.txt \
+    && mkdir output && mkdir output/optimized
 
 COPY src/ .
 
