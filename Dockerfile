@@ -20,4 +20,4 @@ RUN apt-get update \
 
 COPY src/ .
 
-CMD [ "python", "./bot.py" ]
+CMD [ "python","-u","./bot.py" ]
