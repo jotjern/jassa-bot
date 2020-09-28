@@ -15,4 +15,5 @@ RUN sed -i 's/none/read,write/g' /etc/ImageMagick-6/policy.xml
 
 COPY src/ .
 
-CMD [ "python","-u","./bot.py" ]
+#CMD [ "python","-u","./bot.py" ]
+ENTRYPINT [ "./bot.py" ]
