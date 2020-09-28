@@ -3,7 +3,11 @@ name: Docker
 on:
   push:
     # Publish `master` as Docker `latest` image.
+<<<<<<< HEAD
     branches:
+=======
+    #branches:
+>>>>>>> c1b9cfea24484e359fb4d8ca54858d9bfad3ff48
       - master
 
     # Publish `v1.2.3` tags as releases.
