@@ -87,6 +87,6 @@ jobs:
         env:
           RANCHER_ACCESS_KEY: 'token-v7wcn'
           RANCHER_SECRET_KEY: '${{ secrets.RANCHER_SECRET_KEY }}'
-          RANCHER_URL_API: 'https://192.168.1.103/v3'
+          RANCHER_URL_API: 'http://192.168.1.103/v3'
           SERVICE_NAME: 'jassa-bot'
           DOCKER_IMAGE: 'jorgen1040/jassa-bot:latest'
