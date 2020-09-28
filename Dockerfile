@@ -5,19 +5,13 @@ WORKDIR /usr/src/app
 ADD requirements.txt .
 
 # Install ImageMagick and other requirements
-RUN apt-get update \
-    && apt-get install -y build-essential \
-    && wget https://www.imagemagick.org/download/ImageMagick.tar.gz \
-    && tar xf ImageMagick.tar.gz \
-    && cd ImageMagick-7* \
-    && ./configure \
-    && make \
-    && make install \
-    && ldconfig /usr/local/lib \
-    #&& make check \
-    && cd .. \
+RUN apt-get update -y \
+    && apt-get install -y ffmpeg imagemagick \
     && pip install -r requirements.txt \
     && mkdir output && mkdir output/optimized
+
+# Taken from moviepy Dockerfile (modify ImageMagick policy file so that Textclips work correctly)
+RUN sed -i 's/none/read,write/g' /etc/ImageMagick-6/policy.xml 
 
 COPY src/ .
 
