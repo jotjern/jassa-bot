@@ -5,6 +5,8 @@ import discord
 from discord.ext import commands
 import hashlib
 
+config = default.get("config.json")
+
 logger = logging.getLogger('discord')
 logger.setLevel(logging.INFO)
 handler = logging.FileHandler(filename='discord.log', encoding='utf-8', mode='w')
@@ -66,4 +68,4 @@ async def pog(ctx, args):
     await ctx.message.add_reaction(ok)
     
 
-bot.run('NzUxNTM0MzUzNDAxNTEyMDg4.X1Ke6A.5eSTvnxyy_sEhu8EMfdiK30VBzI')
+bot.run(config.token)
