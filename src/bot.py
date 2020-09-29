@@ -4,6 +4,7 @@ import logging
 import discord
 from discord.ext import commands
 import hashlib
+import rule34
 
 config = default.get("config.json")
 
@@ -55,6 +56,11 @@ async def jasså(ctx, args):
         
         await ctx.send(file=discord.File(optimized))
         print("Successfully generated gif with "+args)
+
+@bot.command()
+async def r34(ctx, args):
+    await ctx.send("Ok horny")
+    await ctx.send(rule34.getImages(args))
 
 @bot.command()
 async def close(ctx):
