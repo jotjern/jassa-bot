@@ -1,7 +1,7 @@
 {
     "_meta": {
         "hash": {
-            "sha256": "830cb56820759a56eb0c9edd8ec11850f007c005a4d67c9e59e4d4aee6a1a58b"
+            "sha256": "58bf65d94e4265a88c4a3566cb99b266683a2749322f1453bf74b8dfe9cd5805"
         },
         "pipfile-spec": 6,
         "requires": {
@@ -40,6 +40,15 @@
             ],
             "version": "==3.0.1"
         },
+        "asyncio": {
+            "hashes": [
+                "sha256:83360ff8bc97980e4ff25c964c7bd3923d333d177aa4f7fb736b019f26c7cb41",
+                "sha256:b62c9157d36187eca799c378e572c969f0da87cd5fc42ca372d92cdb06e7e1de",
+                "sha256:c46a87b48213d7464f22d9a497b9eef8c1928b68320a2fa94240f969f6fec08c",
+                "sha256:c4d18b22701821de07bd6aea8b53d21449ec0ec5680645e5317062ea21817d2d"
+            ],
+            "version": "==3.4.3"
+        },
         "attrs": {
             "hashes": [
                 "sha256:26b54ddbbb9ee1d34d5d3668dd37d6cf74990ab23c828c2888dccdceee395594",
@@ -70,11 +79,11 @@
         },
         "discord.py": {
             "hashes": [
-                "sha256:98ea3096a3585c9c379209926f530808f5fcf4930928d8cfb579d2562d119570",
-                "sha256:f9decb3bfa94613d922376288617e6a6f969260923643e2897f4540c34793442"
+                "sha256:3acb61fde0d862ed346a191d69c46021e6063673f63963bc984ae09a685ab211",
+                "sha256:e71089886aa157341644bdecad63a72ff56b44406b1a6467b66db31c8e5a5a15"
             ],
             "index": "pypi",
-            "version": "==1.4.1"
+            "version": "==1.5.0"
         },
         "idna": {
             "hashes": [
@@ -206,12 +215,20 @@
             ],
             "version": "==2.24.0"
         },
+        "rule34": {
+            "hashes": [
+                "sha256:60806da29ef5925c854ae5bc761c705a33914f1d88b2582ac6a4a1b4f65e92da",
+                "sha256:ffb0894fae7358178165a026841e019969d5cbb5d442491197e0ffd2c07a1dfa"
+            ],
+            "index": "pypi",
+            "version": "==1.7.4"
+        },
         "tqdm": {
             "hashes": [
-                "sha256:8f3c5815e3b5e20bc40463fa6b42a352178859692a68ffaa469706e6d38342a5",
-                "sha256:faf9c671bd3fad5ebaeee366949d969dca2b2be32c872a7092a1e1a9048d105b"
+                "sha256:2dd75fdb764f673b8187643496fcfbeac38348015b665878e582b152f3391cdb",
+                "sha256:93b7a6a9129fce904f6df4cf3ae7ff431d779be681a95c3344c26f3e6c09abfa"
             ],
-            "version": "==4.49.0"
+            "version": "==4.50.0"
         },
         "urllib3": {
             "hashes": [
