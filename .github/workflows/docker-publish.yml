@@ -75,6 +75,10 @@ jobs:
 
           docker tag jassa-bot $IMAGE_ID:$VERSION
           docker push $IMAGE_ID:$VERSION
+
+          # Push same image to latest to update bot
+          docker tag jassa-bot $IMAGE_ID:latest
+          docker push $IMAGE_ID:latest
   # deploy:
   #   needs: push
     
@@ -92,6 +96,6 @@ jobs:
   #           [
   #             {
   #               "name": "jassa-bot",
-  #               "image": "jorgen1040/jassa-bot:latest"
+  #               "image": "jorgen1040/jassa-bot:$VERSION"
   #             }
   #           ]
