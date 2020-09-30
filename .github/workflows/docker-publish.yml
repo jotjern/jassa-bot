@@ -75,23 +75,23 @@ jobs:
 
           docker tag jassa-bot $IMAGE_ID:$VERSION
           docker push $IMAGE_ID:$VERSION
-  deploy:
-    needs: push
+  # deploy:
+  #   needs: push
     
-    runs-on: self-hosted
+  #   runs-on: self-hosted
 
-    steps:
-      - name: Deploy
-        if: success()
-        uses: yuyitech/github-action-rancher2@v0.0.1
-        env:
-          RANCHER_ACCESS_KEY: ${{ secrets.RANCHER_ACCESS_KEY }}
-          RANCHER_SECRET_KEY: ${{ secrets.RANCHER_SECRET_KEY }}
-          RANCHER_URL: https://192.168.1.103/v3/project/c-f2n9g:p-gzng8/workloads/deployment:default:jassa-bot
-          RANCHER_DATA: |
-            [
-              {
-                "name": "jassa-bot",
-                "image": "jorgen1040/jassa-bot:latest"
-              }
-            ]
+  #   steps:
+  #     - name: Deploy
+  #       if: success()
+  #       uses: yuyitech/github-action-rancher2@v0.0.1
+  #       env:
+  #         RANCHER_ACCESS_KEY: ${{ secrets.RANCHER_ACCESS_KEY }}
+  #         RANCHER_SECRET_KEY: ${{ secrets.RANCHER_SECRET_KEY }}
+  #         RANCHER_URL: https://192.168.1.103/v3/project/c-f2n9g:p-gzng8/workloads/deployment:default:jassa-bot
+  #         RANCHER_DATA: |
+  #           [
+  #             {
+  #               "name": "jassa-bot",
+  #               "image": "jorgen1040/jassa-bot:latest"
+  #             }
+  #           ]
