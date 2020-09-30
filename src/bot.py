@@ -26,6 +26,7 @@ ok = "✅"
 
 @bot.event
 async def on_ready():
+    await bot.change_presence(activity=discord.Game("+jasså"))
     print(f"Logged in as {bot.user}")
 
 @bot.event
