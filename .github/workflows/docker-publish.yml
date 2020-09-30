@@ -3,8 +3,8 @@ name: Docker
 on:
   push:
     # Publish `master` as Docker `latest` image.
-    #branches:
-    #  - master
+    branches:
+      - master
 
     # Publish `v1.2.3` tags as releases.
     tags:
@@ -75,10 +75,7 @@ jobs:
 
           docker tag jassa-bot $IMAGE_ID:$VERSION
           docker push $IMAGE_ID:$VERSION
-
-          # Push same image to latest to update bot
-          docker tag jassa-bot $IMAGE_ID:latest
-          docker push $IMAGE_ID:latest
+          
   # deploy:
   #   needs: push
     
