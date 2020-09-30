@@ -57,7 +57,7 @@ async def jasså(ctx, args):
         await ctx.send(file=discord.File(optimized))
         print("Successfully generated gif with "+args)
 
-@bot.command()
+@bot.command(aliases=['r34', 'rule34'])
 async def r34(ctx, args):
     await ctx.send("Ok horny")
     #await ctx.send(rule34.getImages(args, randomPID=True))
