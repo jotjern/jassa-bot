@@ -23,6 +23,8 @@ bot = commands.Bot(command_prefix='+')
 
 # Emojis :)
 ok = "✅"
+no = "❌"
+nsfw = "🔞"
 
 @bot.event
 async def on_ready():
@@ -32,9 +34,8 @@ async def on_ready():
 @bot.event
 async def on_command_error(ctx, error):
     if isinstance(error, commands.NSFWChannelRequired):
+        await ctx.message.add_reaction(nsfw)
         await ctx.send("IKKE I GENERAL DA! KUN I <#607395883239342080>")
-    if isinstance(error, commands.MissingRequiredArgument):
-        await ctx.send("Missing argument(s)")
 
 @bot.command()
 async def jasså(ctx, args):
@@ -62,10 +63,17 @@ async def jasså(ctx, args):
         await ctx.send(file=discord.File(optimized))
         print("Successfully generated gif with "+args)
 
+@jasså.error
+async def jasså_error(ctx, error):
+    if isinstance(error, commands.MissingRequiredArgument):
+        await ctx.message.add_reaction(no)
+        await ctx.send("Mangler navn (eller noe annet).\nRiktig bruk: `+jasså <navn>`")
+
 @bot.command(aliases=['r34', 'rule34'])
 @commands.is_nsfw()
 async def _r34(ctx, *, tags):
     #await ctx.send("Ok horny")
+    await ctx.message.add_reaction(ok)
     xml_url = rule34.URLGen(tags)
     url = urlopen(xml_url)
     xmldoc = parse(url)
@@ -79,6 +87,12 @@ async def _r34(ctx, *, tags):
         await ctx.send(random.choice(urls))
     except IndexError:
         await ctx.send(f"No posts were found with the tag(s): {tags}")
+
+@_r34.error
+async def r34_error(ctx, error):
+    if isinstance(error, commands.MissingRequiredArgument):
+        await ctx.message.add_reaction(no)
+        await ctx.send("Missing tags to search for.\nUsage: `+r34/rule34 <tags>` or for multiple tags `+r34/rule34 <tag1> <tag2> ...`")
 
 @bot.command()
 async def close(ctx):
