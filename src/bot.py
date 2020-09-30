@@ -83,6 +83,8 @@ async def _r34(ctx, *, tags):
         urls += [file_url]
     count = len(urls)
     try:
+        if (count == 0):
+            await ctx.send(random.choice(urls))
         await ctx.send(f"Found {count} results, here is one of them")
         await ctx.send(random.choice(urls))
     except IndexError:
