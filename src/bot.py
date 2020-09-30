@@ -5,6 +5,9 @@ import discord
 from discord.ext import commands
 import hashlib
 import rule34
+from urllib.request import urlopen
+from xml.etree.ElementTree import parse
+import random
 
 # logger = logging.getLogger('discord')
 # logger.setLevel(logging.INFO)
@@ -23,16 +26,18 @@ ok = "✅"
 
 @bot.event
 async def on_ready():
-    print(f'Logged in as {bot.user}')
+    print(f"Logged in as {bot.user}")
+
+@bot.event
+async def on_command_error(ctx, error):
+    if isinstance(error, commands.NSFWChannelRequired):
+        await ctx.send("IKKE I GENERAL DA! KUN I <#607395883239342080>")
+    if isinstance(error, commands.MissingRequiredArgument):
+        await ctx.send("Missing argument(s)")
 
 @bot.command()
 async def jasså(ctx, args):
     await ctx.message.add_reaction(ok)
-    #if args == discord.User: 
-    #    name = ctx.
-    
-    
-
     name = hashlib.md5(args.encode()).hexdigest()
     filename = "output/"+name+".mp4"
     optimized ="output/optimized/"+name+".gif"
@@ -49,7 +54,6 @@ async def jasså(ctx, args):
                     .set_duration(3) )
 
         result = CompositeVideoClip([video, txt_clip]) 
-        #result.write_gif(filename,fps=25, program='ffmpeg')
         result.write_videofile(filename)
         # New better ffmpeg options
         os.system("ffmpeg -y -i "+filename+" -i tmp/palette.png -lavfi 'fps=19,scale=480:-1:flags=lanczos,paletteuse=dither=bayer:bayer_scale=5:diff_mode=rectangle' "+optimized)
@@ -58,10 +62,22 @@ async def jasså(ctx, args):
         print("Successfully generated gif with "+args)
 
 @bot.command(aliases=['r34', 'rule34'])
-async def _r34(ctx, *, args):
-    await ctx.send("Ok horny")
-    #await ctx.send(rule34.getImages(args, randomPID=True))
-    await ctx.send(f"Sorry no pron found for {args}")
+@commands.is_nsfw()
+async def _r34(ctx, *, tags):
+    #await ctx.send("Ok horny")
+    xml_url = rule34.URLGen(tags)
+    url = urlopen(xml_url)
+    xmldoc = parse(url)
+    urls = []
+    for post in xmldoc.getroot():
+        file_url = post.get('file_url')
+        urls += [file_url]
+    count = len(urls)
+    try:
+        await ctx.send(f"Found {count} results, here is one of them")
+        await ctx.send(random.choice(urls))
+    except IndexError:
+        await ctx.send(f"No posts were found with the tag(s): {tags}")
 
 @bot.command()
 async def close(ctx):
