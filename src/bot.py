@@ -6,13 +6,13 @@ from discord.ext import commands
 import hashlib
 import rule34
 
-config = default.get("config.json")
-
 logger = logging.getLogger('discord')
 logger.setLevel(logging.INFO)
 handler = logging.FileHandler(filename='discord.log', encoding='utf-8', mode='w')
 handler.setFormatter(logging.Formatter('%(asctime)s:%(levelname)s:%(name)s: %(message)s'))
 logger.addHandler(handler)
+
+rule34 = rule34.Sync()
 
 #client = discord.Client()
 bot = commands.Bot(command_prefix='+')
@@ -60,7 +60,7 @@ async def jasså(ctx, args):
 @bot.command()
 async def r34(ctx, args):
     await ctx.send("Ok horny")
-    await ctx.send(rule34.getImages(args))
+    #await ctx.send(rule34.getImages(args, randomPID=True))
 
 @bot.command()
 async def close(ctx):
@@ -74,4 +74,4 @@ async def pog(ctx, args):
     await ctx.message.add_reaction(ok)
     
 
-bot.run(config.token)
+bot.run("NzUxNTM0MzUzNDAxNTEyMDg4.X1Ke6A.5eSTvnxyy_sEhu8EMfdiK30VBzI")

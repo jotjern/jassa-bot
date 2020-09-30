@@ -7,8 +7,10 @@ ADD requirements.txt .
 # Install ImageMagick and other requirements
 RUN apt-get update -y \
     && apt-get install -y ffmpeg imagemagick \
-    && pip install -r requirements.txt \
     && mkdir output && mkdir output/optimized
+
+# Install pip requirements
+RUN pip install -r requirements.txt
 
 # Taken from moviepy Dockerfile (modify ImageMagick policy file so that Textclips work correctly)
 RUN sed -i 's/none/read,write/g' /etc/ImageMagick-6/policy.xml 
