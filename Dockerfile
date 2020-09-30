@@ -1,7 +1,5 @@
 FROM python:3.8.2
 
-WORKDIR /jassa-bot
-
 ADD requirements.txt .
 
 # Install ImageMagick and other requirements
@@ -18,3 +16,5 @@ RUN sed -i 's/none/read,write/g' /etc/ImageMagick-6/policy.xml
 COPY src/ .
 
 CMD [ "python","-u","./bot.py" ]
+
+VOLUME /jassa-bot
