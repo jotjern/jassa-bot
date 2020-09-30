@@ -58,9 +58,10 @@ async def jasså(ctx, args):
         print("Successfully generated gif with "+args)
 
 @bot.command(aliases=['r34', 'rule34'])
-async def r34(ctx, args):
+async def _r34(ctx, *, args):
     await ctx.send("Ok horny")
     #await ctx.send(rule34.getImages(args, randomPID=True))
+    await ctx.send(f"Sorry no pron found for {args}")
 
 @bot.command()
 async def close(ctx):
