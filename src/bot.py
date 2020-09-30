@@ -82,6 +82,8 @@ async def _r34(ctx, *, tags):
         file_url = post.get('file_url')
         urls += [file_url]
     count = len(urls)
+    if (count == 100): 
+        count = "100+"
     try:
         if (count == 0):
             await ctx.send(random.choice(urls))
