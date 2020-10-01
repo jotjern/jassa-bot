@@ -49,8 +49,8 @@ async def on_command_error(ctx, error):
 async def jasså(ctx, args):
     await ctx.message.add_reaction(ok)
     name = hashlib.md5(args.encode()).hexdigest()
-    filename = "output/"+name+".mp4"
-    optimized ="output/optimized/"+name+".gif"
+    filename = "/jassa-bot/output/"+name+".mp4"
+    optimized ="/jassa-bot/output/optimized/"+name+".gif"
 
     if os.path.isfile(optimized): 
         print("Gif allerede lagd, sender fil")
@@ -69,7 +69,7 @@ async def jasså(ctx, args):
         os.system("ffmpeg -y -i "+filename+" -i tmp/palette.png -lavfi 'fps=19,scale=480:-1:flags=lanczos,paletteuse=dither=bayer:bayer_scale=5:diff_mode=rectangle' "+optimized)
         
         await ctx.send(file=discord.File(optimized))
-        print("Successfully generated gif with "+args)
+        print(f"Successfully generated gif with {args}")
 
 @jasså.error
 async def jasså_error(ctx, error):
@@ -80,6 +80,7 @@ async def jasså_error(ctx, error):
 @bot.command(aliases=['r34', 'rule34'])
 @commands.is_nsfw()
 async def _r34(ctx, *, tags):
+    print(f"Rule34: Searching for {tags}")
     #await ctx.send("Ok horny")
     await ctx.message.add_reaction(ok)
     xml_url = rule34.URLGen(tags)
@@ -93,11 +94,14 @@ async def _r34(ctx, *, tags):
     if (count == 100): 
         count = "100+"
     try:
+        randomUrl = random.choice(urls)
         if (count == 0):
             await ctx.send(random.choice(urls))
         await ctx.send(f"Found {count} results, here is one of them")
-        await ctx.send(random.choice(urls))
+        await ctx.send(randomUrl)
+        print(f"Rule34: Sent {randomUrl} with tag(s): {tags}")
     except IndexError:
+        print(f"Rule34: No posts were found with the tag(s): {tags}")
         await ctx.send(f"No posts were found with the tag(s): {tags}")
 
 @_r34.error
