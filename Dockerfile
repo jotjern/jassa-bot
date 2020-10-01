@@ -1,11 +1,13 @@
 FROM python:3.8.2
 
+VOLUME /jassa-bot
+WORKDIR /usr/src/app
+
 ADD requirements.txt .
 
 # Install ImageMagick and other requirements
 RUN apt-get update -y \
-    && apt-get install -y ffmpeg imagemagick \
-    && mkdir output && mkdir output/optimized
+    && apt-get install -y ffmpeg imagemagick
 
 # Install pip requirements
 RUN pip install -r requirements.txt
@@ -16,5 +18,3 @@ RUN sed -i 's/none/read,write/g' /etc/ImageMagick-6/policy.xml
 COPY src/ .
 
 CMD [ "python","-u","./bot.py" ]
-
-VOLUME /jassa-bot

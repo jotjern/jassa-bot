@@ -26,6 +26,14 @@ ok = "✅"
 no = "❌"
 nsfw = "🔞"
 
+# Check for folders
+if os.path.isdir("/jassa-bot/output/optimized"):
+    print("All files are correct :)")
+else: 
+    os.system("mkdir -p /jassa-bot/output/optimized")
+    print("Made output folders")
+
+
 @bot.event
 async def on_ready():
     await bot.change_presence(activity=discord.Game("+jasså"))
@@ -58,7 +66,7 @@ async def jasså(ctx, args):
         result = CompositeVideoClip([video, txt_clip]) 
         result.write_videofile(filename)
         # New better ffmpeg options
-        os.system("ffmpeg -y -i "+filename+" -i tmp/palette.png -lavfi 'fps=10,scale=480:-1:flags=lanczos,paletteuse=dither=bayer:bayer_scale=5:diff_mode=rectangle' "+optimized)
+        os.system("ffmpeg -y -i "+filename+" -i tmp/palette.png -lavfi 'fps=19,scale=480:-1:flags=lanczos,paletteuse=dither=bayer:bayer_scale=5:diff_mode=rectangle' "+optimized)
         
         await ctx.send(file=discord.File(optimized))
         print("Successfully generated gif with "+args)
