@@ -46,6 +46,10 @@ async def on_command_error(ctx, error):
         await ctx.send("IKKE I GENERAL DA! KUN I <#607395883239342080>")
 
 @bot.command()
+async def ping(ctx):
+    await ctx.send(f"{round(bot.latency * 1000)}ms")
+
+@bot.command()
 async def jasså(ctx, args):
     await ctx.message.add_reaction(ok)
     name = hashlib.md5(args.encode()).hexdigest()
