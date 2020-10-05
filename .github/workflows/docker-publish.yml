@@ -75,7 +75,8 @@ jobs:
 
           docker tag jassa-bot $IMAGE_ID:$VERSION
           docker push $IMAGE_ID:$VERSION
-          
+  
+  # Deploy the new image to Rancher
   deploy:
     needs: push
     
