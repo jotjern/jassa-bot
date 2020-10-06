@@ -83,17 +83,11 @@ jobs:
     runs-on: self-hosted
 
     steps:
-      - name: Deploy
-        if: success()
-        uses: yuyitech/github-action-rancher2@v0.0.1
+      - name: Update rancher deployment
+        uses: th0th/rancher-redeploy-workload@v0.5
         env:
-          RANCHER_ACCESS_KEY: ${{ secrets.RANCHER_ACCESS_KEY }}
-          RANCHER_SECRET_KEY: ${{ secrets.RANCHER_SECRET_KEY }}
-          RANCHER_URL: https://rancher.mcboyz.xyz/v3/project/c-qrp8j:p-vbgtc/workloads/deployment:default:jassa-bot
-          RANCHER_DATA: |
-            [
-              {
-                "name": "jassa-bot",
-                "image": "jorgen1040/jassa-bot:$VERSION"
-              }
-            ]
+          RANCHER_BEARER_TOKEN: ${{ secrets.RANCHER_BEARER_TOKEN }}
+          RANCHER_NAMESPACE: 'default'
+          RANCHER_PROJECT_ID: 'c-qrp8j:p-vbgtc'
+          RANCHER_URL: 'https://rancher.mcboyz.xyz'
+          RANCHER_WORKLOAD: 'jassa-bot'
