@@ -8,6 +8,7 @@ moviepy = "*"
 "discord.py" = "*"
 rule34 = "*"
 bs4 = "*"
+lxml = "*"
 
 [dev-packages]
 

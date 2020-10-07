@@ -1,3 +1,4 @@
+from xml.etree.ElementTree import tostringlist
 from moviepy.editor import VideoFileClip, TextClip, CompositeVideoClip
 import os
 import logging
@@ -49,7 +50,9 @@ async def on_command_error(ctx, error):
 
 @bot.command()
 async def ping(ctx):
-    await ctx.send(f"{round(bot.latency * 1000)}ms")
+    ping = round(bot.latency * 1000)
+    await ctx.send(f"{ping}ms")
+    print(f"{ping}ms")
 
 @bot.command()
 async def jasså(ctx, args):
@@ -86,29 +89,36 @@ async def jasså_error(ctx, error):
 @bot.command(aliases=['rule34'])
 @commands.is_nsfw()
 async def r34(ctx, *, args):
-    tags = ", ".join(args)
-    print(f"Rule34: Searching for {tags}")
-    #await ctx.send("Ok horny")
-    await ctx.message.add_reaction(ok)
-    xml_url = rule34.URLGen(args)
-    xml = bs(requests.get(xml_url).text, "lxml")
-    urls = []
-    for post in xml.findAll("post"):
-        file_url = post.attrs['file_url']
-        post_tags = post.attrs['tags']
-        urls += [file_url]
-    count = len(urls)
-    count_text = str(count)
-    if count >= 100: 
-        count_text = "100+"
-    if count >= 0:
-        randomUrl = random.choice(urls)
-        await ctx.send(f"Found {count_text} results, here is one of them")
-        await ctx.send(randomUrl)
-        print(f"Rule34: Sent {randomUrl} with tag(s): {tags}")
+    # FIX THIS
+    #tags = ", ".join(args)
+    # Check for illegal tags
+    if ("cub" or "loli" or "shota" or "child" or "underage" or "shotacon") in args:
+        await ctx.message.add_reaction(nsfw)
+        await ctx.send("NEI TOS")
     else:
-        print(f"Rule34: No posts were found with the tag(s): {tags}")
-        await ctx.send(f"No posts were found with the tag(s): {tags}")
+        tags = args
+        print(f"Rule34: Searching for {tags}")
+        #await ctx.send("Ok horny")
+        await ctx.message.add_reaction(ok)
+        xml_url = rule34.URLGen(args)
+        print(f"Got API url for {tags}: {xml_url}")
+        xml = bs(requests.get(xml_url).text, "lxml")
+        urls = []
+        for post in xml.findAll("post"):
+            file_url = post.attrs['file_url']
+            urls += [file_url]
+        count = len(urls)
+        count_text = str(count)
+        if count >= 100: 
+            count_text = "100+"
+        if count >= 1:
+            randomUrl = random.choice(urls)
+            await ctx.send(f"Found {count_text} results, here is one of them")
+            await ctx.send(randomUrl)
+            print(f"Rule34: Sent {randomUrl} with tag(s): {tags}")
+        else:
+            print(f"Rule34: No posts were found with the tag(s): {tags}")
+            await ctx.send(f"No posts were found with the tag(s): {tags}")
 
 @r34.error
 async def r34_error(ctx, error):
