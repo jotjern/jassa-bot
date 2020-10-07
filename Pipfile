@@ -7,6 +7,7 @@ name = "pypi"
 moviepy = "*"
 "discord.py" = "*"
 rule34 = "*"
+bs4 = "*"
 
 [dev-packages]
 

@@ -5,9 +5,10 @@ import discord
 from discord.ext import commands
 import hashlib
 import rule34
-from urllib.request import urlopen
-from xml.etree.ElementTree import parse
+import requests
+from bs4 import BeautifulSoup as bs
 import random
+
 
 # logger = logging.getLogger('discord')
 # logger.setLevel(logging.INFO)
@@ -41,6 +42,7 @@ async def on_ready():
 
 @bot.event
 async def on_command_error(ctx, error):
+    print(error)
     if isinstance(error, commands.NSFWChannelRequired):
         await ctx.message.add_reaction(nsfw)
         await ctx.send("IKKE I GENERAL DA! KUN I <#607395883239342080>")
@@ -81,34 +83,34 @@ async def jasså_error(ctx, error):
         await ctx.message.add_reaction(no)
         await ctx.send("Mangler navn (eller noe annet).\nRiktig bruk: `+jasså <navn>`")
 
-@bot.command(aliases=['r34', 'rule34'])
+@bot.command(aliases=['rule34'])
 @commands.is_nsfw()
-async def _r34(ctx, *, tags):
+async def r34(ctx, *, args):
+    tags = ", ".join(args)
     print(f"Rule34: Searching for {tags}")
     #await ctx.send("Ok horny")
     await ctx.message.add_reaction(ok)
-    xml_url = rule34.URLGen(tags)
-    url = urlopen(xml_url)
-    xmldoc = parse(url)
+    xml_url = rule34.URLGen(args)
+    xml = bs(requests.get(xml_url).text, "lxml")
     urls = []
-    for post in xmldoc.getroot():
-        file_url = post.get('file_url')
+    for post in xml.findAll("post"):
+        file_url = post.attrs['file_url']
+        post_tags = post.attrs['tags']
         urls += [file_url]
     count = len(urls)
-    if (count == 100): 
-        count = "100+"
-    try:
+    count_text = str(count)
+    if count >= 100: 
+        count_text = "100+"
+    if count >= 0:
         randomUrl = random.choice(urls)
-        if (count == 0):
-            await ctx.send(random.choice(urls))
-        await ctx.send(f"Found {count} results, here is one of them")
+        await ctx.send(f"Found {count_text} results, here is one of them")
         await ctx.send(randomUrl)
         print(f"Rule34: Sent {randomUrl} with tag(s): {tags}")
-    except IndexError:
+    else:
         print(f"Rule34: No posts were found with the tag(s): {tags}")
         await ctx.send(f"No posts were found with the tag(s): {tags}")
 
-@_r34.error
+@r34.error
 async def r34_error(ctx, error):
     if isinstance(error, commands.MissingRequiredArgument):
         await ctx.message.add_reaction(no)
