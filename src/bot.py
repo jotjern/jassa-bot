@@ -100,7 +100,7 @@ async def r34(ctx, *, args):
         print(f"Rule34: Searching for {tags}")
         #await ctx.send("Ok horny")
         await ctx.message.add_reaction(ok)
-        xml_url = rule34.URLGen(args)
+        xml_url = rule34.URLGen(args+"-cub -loli -underage -shotacon - shota")
         print(f"Got API url for {tags}: {xml_url}")
         xml = bs(requests.get(xml_url).text, "lxml")
         urls = []
