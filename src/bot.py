@@ -20,7 +20,7 @@ import random
 rule34 = rule34.Sync()
 
 #client = discord.Client()
-bot = commands.Bot(command_prefix='+')
+bot = commands.Bot(command_prefix='+', owner_id=140586848819871744)
 #logging.basicConfig(level=logging.INFO)
 
 # Emojis :)
@@ -54,7 +54,7 @@ async def ping(ctx):
     await ctx.send(f"{ping}ms")
     print(f"{ping}ms")
 
-@bot.command(aliases='jassa')
+@bot.command(aliases=['jassa'])
 async def jasså(ctx, args):
     await ctx.message.add_reaction(ok)
     name = hashlib.md5(args.encode()).hexdigest()
@@ -127,15 +127,9 @@ async def r34_error(ctx, error):
         await ctx.send("Missing tags to search for.\nUsage: `+r34/rule34 <tags>` or for multiple tags `+r34/rule34 <tag1> <tag2> ...`")
 
 @bot.command()
+@commands.is_owner()
 async def close(ctx):
     ctx.add_reaction(ok)
     await bot.close()
-
-@bot.command()
-async def pog(ctx, args):
-    name = hashlib.md5(args.encode()).hexdigest()
-    await ctx.send(name)
-    await ctx.message.add_reaction(ok)
-    
 
 bot.run("NzUxNTM0MzUzNDAxNTEyMDg4.X1Ke6A.5eSTvnxyy_sEhu8EMfdiK30VBzI")
