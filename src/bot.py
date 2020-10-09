@@ -54,7 +54,7 @@ async def ping(ctx):
     await ctx.send(f"{ping}ms")
     print(f"{ping}ms")
 
-@bot.command()
+@bot.command(aliases='jassa')
 async def jasså(ctx, args):
     await ctx.message.add_reaction(ok)
     name = hashlib.md5(args.encode()).hexdigest()
