@@ -1,4 +1,3 @@
-from xml.etree.ElementTree import tostringlist
 from moviepy.editor import VideoFileClip, TextClip, CompositeVideoClip
 import os
 import logging
