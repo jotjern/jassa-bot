@@ -88,8 +88,6 @@ async def jasså_error(ctx, error):
 @bot.command(aliases=['rule34'])
 @commands.is_nsfw()
 async def r34(ctx, *, args):
-    # FIX THIS
-    #tags = ", ".join(args)
     # Check for illegal tags
     if ("cub" or "loli" or "shota" or "child" or "underage" or "shotacon") in args:
         await ctx.message.add_reaction(nsfw)
@@ -97,9 +95,8 @@ async def r34(ctx, *, args):
     else:
         tags = args
         print(f"Rule34: Searching for {tags}")
-        #await ctx.send("Ok horny")
         await ctx.message.add_reaction(ok)
-        xml_url = rule34.URLGen(args+"-cub -loli -underage -shotacon - shota")
+        xml_url = rule34.URLGen(args+"+-cub -loli -underage -shotacon -shota")
         print(f"Got API url for {tags}: {xml_url}")
         xml = bs(requests.get(xml_url).text, "lxml")
         urls = []
