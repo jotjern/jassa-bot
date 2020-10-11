@@ -65,7 +65,7 @@ async def jasså(ctx, args):
         await ctx.send(file=discord.File(optimized))
     else:
         #await ctx.send("Lager ny gif nå :)")
-        video = VideoFileClip(os.path.abspath("tmp/jassa_template.mp4")).subclip(0,3)
+        video = VideoFileClip(os.path.abspath("media/jassa_template.mp4")).subclip(0,3)
 
         txt_clip = ( TextClip(args,fontsize=33,color='white',font='ProximaNova-Semibold.otf')
                     .set_position((160,655))
@@ -74,7 +74,7 @@ async def jasså(ctx, args):
         result = CompositeVideoClip([video, txt_clip]) 
         result.write_videofile(filename)
         # New better ffmpeg options
-        os.system("ffmpeg -y -i "+filename+" -i tmp/palette.png -lavfi 'fps=19,scale=480:-1:flags=lanczos,paletteuse=dither=bayer:bayer_scale=5:diff_mode=rectangle' "+optimized)
+        os.system("ffmpeg -y -i "+filename+" -i media/palette.png -lavfi 'fps=19,scale=480:-1:flags=lanczos,paletteuse=dither=bayer:bayer_scale=5:diff_mode=rectangle' "+optimized)
         
         await ctx.send(file=discord.File(optimized))
         print(f"Successfully generated gif with {args}")
