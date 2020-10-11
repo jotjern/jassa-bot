@@ -79,17 +79,17 @@ jobs:
           docker push $IMAGE_ID:$VERSION
   
   # Deploy the new image to Rancher
-  deploy:
-    needs: push
+  # deploy:
+  #   needs: push
     
-    runs-on: self-hosted
+  #   runs-on: self-hosted
 
-    steps:
-      - name: Update rancher deployment
-        uses: th0th/rancher-redeploy-workload@v0.5
-        env:
-          RANCHER_BEARER_TOKEN: ${{ secrets.RANCHER_BEARER_TOKEN }}
-          RANCHER_NAMESPACE: 'default'
-          RANCHER_PROJECT_ID: 'c-qrp8j:p-vbgtc'
-          RANCHER_URL: 'https://192.168.1.102:9091'
-          RANCHER_WORKLOAD: 'jassa-bot'
+  #   steps:
+  #     - name: Update rancher deployment
+  #       uses: th0th/rancher-redeploy-workload@v0.5
+  #       env:
+  #         RANCHER_BEARER_TOKEN: ${{ secrets.RANCHER_BEARER_TOKEN }}
+  #         RANCHER_NAMESPACE: 'default'
+  #         RANCHER_PROJECT_ID: 'c-qrp8j:p-vbgtc'
+  #         RANCHER_URL: 'https://192.168.1.102:9091'
+  #         RANCHER_WORKLOAD: 'jassa-bot'
