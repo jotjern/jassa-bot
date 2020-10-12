@@ -1,5 +1,4 @@
-# TODO Make this dockerfile build from alpine image for smaller size
-FROM python:3.9
+FROM python:3.8-slim
 
 VOLUME /jassa-bot
 WORKDIR /usr/src/app
