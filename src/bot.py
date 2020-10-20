@@ -89,7 +89,7 @@ async def jassa(ctx, args):
         logging.info(f"Successfully generated gif with {args} in {stop_time-start_time} seconds")
 
 @jassa.error
-async def jasså_error(ctx, error):
+async def jassa_error(ctx, error):
     if isinstance(error, commands.MissingRequiredArgument):
         await ctx.message.add_reaction(no)
         await ctx.send("Mangler navn (eller noe annet).\nRiktig bruk: `+jasså <navn>`")
