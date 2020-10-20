@@ -38,7 +38,7 @@ if sys.platform != 'linux':
 
 if os.path.isdir("/jassa-bot/output/optimized"):
     logging.info("All files are correct :). Persistence is enabled")
-else: 
+else:
     os.system("mkdir -p /jassa-bot/output/optimized")
     logging.info("Made output folders, persistence is now enabled")
 
@@ -58,7 +58,7 @@ async def on_command_error(ctx, error):
             await ctx.send("IKKE I GENERAL DA! KUN I <#607395883239342080>")
         else:
             await ctx.send("This command is only available in channels marked NSFW")
-        
+
 @bot.command(aliases=['pog'])
 async def ping(ctx):
     ping = round(bot.latency * 1000)
@@ -72,7 +72,7 @@ async def jasså(ctx, args):
     filename = "/jassa-bot/output/"+name+".mp4"
     optimized ="/jassa-bot/output/optimized/"+name+".gif"
 
-    if os.path.isfile(optimized): 
+    if os.path.isfile(optimized):
         logging.info("Gif exists, sending file")
         await ctx.send(file=discord.File(optimized))
     else:
@@ -84,14 +84,14 @@ async def jasså(ctx, args):
                     .set_position((160,655))
                     .set_duration(3) )
 
-        result = CompositeVideoClip([video, txt_clip]) 
+        result = CompositeVideoClip([video, txt_clip])
         result.write_videofile(filename)
         # New better ffmpeg options
         os.system("ffmpeg -y -i "+filename+" -i media/palette.png -lavfi 'fps=19,scale=480:-1:flags=lanczos,paletteuse=dither=bayer:bayer_scale=5:diff_mode=rectangle' "+optimized)
-        
+
         await ctx.send(file=discord.File(optimized))
         stopTime = time.time()
-        logging.info(f"Successfully generated gif with {args} in {stopTime-startTime} seconds")    
+        logging.info(f"Successfully generated gif with {args} in {stopTime-startTime} seconds")
 
 @jasså.error
 async def jasså_error(ctx, error):
@@ -118,7 +118,7 @@ async def r34(ctx, *, tags):
             urls += [file_url]
         count = len(urls)
         count_text = str(count)
-        if count >= 100: 
+        if count >= 100:
             count_text = "100+"
         if count >= 1:
             randomUrl = random.choice(urls)

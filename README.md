@@ -7,13 +7,13 @@ Just a super simple bot for generating a gif meme.
 
 <img src="example.gif" height="300">
 
-Also serves as a replacement for [kawaiibot](https://github.com/KawaiiBot/KawaiiBot)'s rule34 command. 
+Also serves as a replacement for [kawaiibot](https://github.com/KawaiiBot/KawaiiBot)'s rule34 command.
 ###### God, please forgive me 🙏
 
 ## To use on your own server
 To use the bot just invite the bot that I'm hosting with this [Invite Link](https://discord.com/api/oauth2/authorize?client_id=751534353401512088&permissions=0&scope=bot)
 
-Or you could run the bot yourself with Docker. Simply replace the placeholders and run the command: 
+Or you could run the bot yourself with Docker. Simply replace the placeholders and run the command:
 ```
 docker run -d --name jassa-bot \
 -e BOT_TOKEN=YOUR_DISCORD_BOT_TOKEN \
