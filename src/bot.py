@@ -23,7 +23,8 @@ logger.setLevel(logging.CRITICAL)
 rule34 = rule34.Sync()
 
 bot = commands.Bot(command_prefix='+', owner_id=ownerid)
-logging.basicConfig(format='%(asctime)s [%(levelname)s]: %(message)s', level=logging.INFO)
+logging.Formatter()
+logging.basicConfig(format='%(asctime)s [%(levelname)s]: %(message)s', datefmt='%Y-%m-%d %H:%M:%S', level=logging.INFO)
 
 
 # Emojis :)

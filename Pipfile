@@ -9,6 +9,7 @@ moviepy = "*"
 rule34 = "*"
 bs4 = "*"
 lxml = "*"
+pre-commit = "*"
 
 [dev-packages]
 
