@@ -20,9 +20,19 @@ on:
   #IMAGE_NAME: jassa-bot
 
 jobs:
+  gitleaks:
+    runs-on: self-hosted
+    steps:
+    - uses: actions/checkout@v1
+    - name: Check for any exposed keys
+      uses: zricethezav/gitleaks-action@master
+
   # Run tests.
   # See also https://docs.docker.com/docker-hub/builds/automated-testing/
   test:
+    # If gitleaks fails stop workflow
+    needs: gitleaks
+
     runs-on: self-hosted
 
     steps:
