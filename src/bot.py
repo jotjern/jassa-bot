@@ -60,8 +60,8 @@ async def ping(ctx):
     await ctx.send(f"{ping}ms")
     logging.info(f"{ping}ms")
 
-@bot.command(aliases=['jassa'])
-async def jasså(ctx, args):
+@bot.command(aliases=['jasså'])
+async def jassa(ctx, args):
     await ctx.message.add_reaction(ok)
     name = hashlib.md5(args.encode()).hexdigest()
     filename = "/jassa-bot/output/"+name+".mp4"
@@ -88,7 +88,7 @@ async def jasså(ctx, args):
         stopTime = time.time()
         logging.info(f"Successfully generated gif with {args} in {stopTime-startTime} seconds")    
 
-@jasså.error
+@jassa.error
 async def jasså_error(ctx, error):
     if isinstance(error, commands.MissingRequiredArgument):
         await ctx.message.add_reaction(no)
