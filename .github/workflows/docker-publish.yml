@@ -22,7 +22,7 @@ on:
 jobs:
   gitleaks:
     if: github.event_name == 'pull_request'
-    
+
     runs-on: ubuntu-latest
 
     steps:
@@ -34,7 +34,8 @@ jobs:
   # See also https://docs.docker.com/docker-hub/builds/automated-testing/
   test:
     # If gitleaks fails stop workflow
-    needs: gitleaks
+    # TODO: Make it so a push doesn't fail entire workflow
+    #needs: gitleaks
 
     runs-on: self-hosted
 

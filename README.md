@@ -5,7 +5,7 @@ Just a super simple bot for generating a gif meme.
 
 ##### Example of gif using `+jasså GitHub`
 
-<img src="https://cdn.discordapp.com/attachments/299979307827200001/768195653334466630/d3b7c913cd04ebfec0e9ec32cb6fd58c.gif" height="300">
+<img src="example.gif" height="300">
 
 Also serves as a replacement for [kawaiibot](https://github.com/KawaiiBot/KawaiiBot)'s rule34 command. 
 ###### God, please forgive me 🙏
