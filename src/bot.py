@@ -72,7 +72,7 @@ async def jassa(ctx, args):
         await ctx.send(file=discord.File(optimized))
     else:
         logging.info("Making new gif")
-        startTime = time.time()
+        start_time = time.time()
         video = VideoFileClip(os.path.abspath("media/jassa_template.mp4")).subclip(0,3)
 
         txt_clip = ( TextClip(args,fontsize=33,color='white',font='ProximaNova-Semibold.otf')
@@ -85,8 +85,8 @@ async def jassa(ctx, args):
         os.system("ffmpeg -y -i "+filename+" -i media/palette.png -lavfi 'fps=19,scale=480:-1:flags=lanczos,paletteuse=dither=bayer:bayer_scale=5:diff_mode=rectangle' "+optimized)
         
         await ctx.send(file=discord.File(optimized))
-        stopTime = time.time()
-        logging.info(f"Successfully generated gif with {args} in {stopTime-startTime} seconds")    
+        stop_time = time.time()
+        logging.info(f"Successfully generated gif with {args} in {stop_time-start_time} seconds")    
 
 @jassa.error
 async def jasså_error(ctx, error):
@@ -116,10 +116,10 @@ async def r34(ctx, *, tags):
         if count >= 100: 
             count_text = "100+"
         if count >= 1:
-            randomUrl = random.choice(urls)
+            random_url = random.choice(urls)
             await ctx.send(f"Found {count_text} results, here is one of them")
-            await ctx.send(randomUrl)
-            logging.info(f"Rule34: Sent {randomUrl} with tag(s): {tags}")
+            await ctx.send(random_url)
+            logging.info(f"Rule34: Sent {random_url} with tag(s): {tags}")
         else:
             logging.info(f"Rule34: No posts were found with the tag(s): {tags}")
             await ctx.send(f"No posts were found with the tag(s): {tags}")
