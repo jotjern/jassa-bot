@@ -2,7 +2,8 @@ name: Docker
 
 on:
   push:
-    # Publish `master` as Docker `latest` image.
+    # Publish `master` as Docker `latest` image
+    # and `dev` as Docker `dev` image.
     branches:
       - master
       - dev
@@ -43,6 +44,7 @@ jobs:
     needs: test
 
     runs-on: self-hosted
+    # Don't push docker image on PRs
     if: github.event_name == 'push'
 
     steps:
@@ -52,7 +54,6 @@ jobs:
         run: docker build . --file Dockerfile --tag jassa-bot
 
       - name: Log into Dockerhub
-      # TODO: Create a PAT with `read:packages` and `write:packages` scopes and save it as an Actions secret `CR_PAT`
         run: echo "${{ secrets.DOCKERHUB_PASSWORD }}" | docker login -u jorgen1040 --password-stdin
 
       - name: Push image to Dockerhub
@@ -77,19 +78,3 @@ jobs:
 
           docker tag jassa-bot $IMAGE_ID:$VERSION
           docker push $IMAGE_ID:$VERSION
-  
-  # Deploy the new image to Rancher
-  # deploy:
-  #   needs: push
-    
-  #   runs-on: self-hosted
-
-  #   steps:
-  #     - name: Update rancher deployment
-  #       uses: th0th/rancher-redeploy-workload@v0.5
-  #       env:
-  #         RANCHER_BEARER_TOKEN: ${{ secrets.RANCHER_BEARER_TOKEN }}
-  #         RANCHER_NAMESPACE: 'default'
-  #         RANCHER_PROJECT_ID: 'c-qrp8j:p-vbgtc'
-  #         RANCHER_URL: 'https://192.168.1.102:9091'
-  #         RANCHER_WORKLOAD: 'jassa-bot'
