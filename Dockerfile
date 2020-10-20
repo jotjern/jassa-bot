@@ -5,7 +5,7 @@ WORKDIR /usr/src/app
 
 # Install ImageMagick and other requirements
 RUN apt-get update -y \
-    && apt-get install -y --no-install-recommends ffmpeg imagemagick \
+    && apt-get install -y --no-install-recommends ffmpeg=7:4.1.6-1~deb10u1 imagemagick=8:6.9.10.23+dfsg-2.1+deb10u1 \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/*
 
