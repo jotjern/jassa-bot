@@ -5,7 +5,9 @@ WORKDIR /usr/src/app
 
 # Install ImageMagick and other requirements
 RUN apt-get update -y \
-    && apt-get install -y ffmpeg imagemagick
+    && apt-get install -y --no-install-recommends ffmpeg imagemagick \
+    && apt-get clean \
+    && rm -rf /var/lib/apt/lists/*
 
 # Taken from moviepy Dockerfile (modify ImageMagick policy file so that Textclips work correctly)
 RUN sed -i 's/none/read,write/g' /etc/ImageMagick-6/policy.xml
