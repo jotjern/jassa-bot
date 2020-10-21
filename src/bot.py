@@ -31,12 +31,15 @@ nsfw = "🔞"
 # Check for linux and folders
 if sys.platform != 'linux':
     logging.warning("Bot is not made for non Linux installations. Persistence may not work")
-
-if os.path.isdir("/jassa-bot/output/optimized"):
-    logging.info("All files are correct :). Persistence is enabled")
-else:
-    os.system("mkdir -p /jassa-bot/output/optimized")
-    logging.info("Made output folders, persistence is now enabled")
+try:
+    if os.path.isdir("/jassa-bot/output/optimized"):
+        logging.info("All files are correct :). Persistence is enabled")
+    else:
+        os.makedirs("/jassa-bot/output/optimized")
+        logging.info("Made output folders, persistence is now enabled")
+except PermissionError as e:
+    logging.warning(e)
+    logging.warning("Permission denied for /jassa-bot directory. Persistence will not work!")
 
 @bot.event
 async def on_ready():
