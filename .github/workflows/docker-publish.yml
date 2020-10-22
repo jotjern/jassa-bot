@@ -23,7 +23,7 @@ jobs:
   gitleaks:
     if: github.event_name == 'pull_request'
 
-    runs-on: self-hosted
+    runs-on: ubuntu-latest
 
     steps:
     - uses: actions/checkout@v1
@@ -37,7 +37,7 @@ jobs:
     # TODO: Make it so a push doesn't fail entire workflow
     #needs: gitleaks
 
-    runs-on: self-hosted
+    runs-on: ubuntu-latest
 
     steps:
       - uses: actions/checkout@v2
@@ -57,7 +57,7 @@ jobs:
     # Ensure test job passes before pushing image.
     needs: test
 
-    runs-on: self-hosted
+    runs-on: ubuntu-latest
     # Don't push docker image on PRs
     if: github.event_name == 'push'
 
