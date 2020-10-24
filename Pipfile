@@ -9,9 +9,10 @@ moviepy = "*"
 rule34 = "*"
 bs4 = "*"
 lxml = "*"
-pre-commit = "*"
 
 [dev-packages]
+pre-commit = "*"
+black = "==20.8b1"
 
 [requires]
 python_version = "3.8"
