@@ -11,17 +11,21 @@ import random
 import time
 import sys
 
-token = os.environ['BOT_TOKEN']
-ownerid = os.environ['OWNER_ID']
+token = os.environ["BOT_TOKEN"]
+ownerid = os.environ["OWNER_ID"]
 
-logger = logging.getLogger('discord')
+logger = logging.getLogger("discord")
 logger.setLevel(logging.CRITICAL)
 logging.Formatter()
-logging.basicConfig(format='%(asctime)s [%(levelname)s]: %(message)s', datefmt='%Y-%m-%d %H:%M:%S', level=logging.INFO)
+logging.basicConfig(
+    format="%(asctime)s [%(levelname)s]: %(message)s",
+    datefmt="%Y-%m-%d %H:%M:%S",
+    level=logging.INFO,
+)
 
 rule34 = rule34.Sync()
 
-bot = commands.Bot(command_prefix='+', owner_id=ownerid)
+bot = commands.Bot(command_prefix="+", owner_id=ownerid)
 
 # Emojis :)
 ok = "✅"
@@ -29,8 +33,10 @@ no = "❌"
 nsfw = "🔞"
 
 # Check for linux and folders
-if sys.platform != 'linux':
-    logging.warning("Bot is not made for non Linux installations. Persistence may not work")
+if sys.platform != "linux":
+    logging.warning(
+        "Bot is not made for non Linux installations. Persistence may not work"
+    )
 try:
     if os.path.isdir("/jassa-bot/output/optimized"):
         logging.info("All files are correct :). Persistence is enabled")
@@ -39,12 +45,16 @@ try:
         logging.info("Made output folders, persistence is now enabled")
 except PermissionError as e:
     logging.warning(e)
-    logging.warning("Permission denied for /jassa-bot directory. Persistence will not work!")
+    logging.warning(
+        "Permission denied for /jassa-bot directory. Persistence will not work!"
+    )
+
 
 @bot.event
 async def on_ready():
     await bot.change_presence(activity=discord.Game("+jasså"))
     logging.info(f"Logged in as {bot.user}")
+
 
 @bot.event
 async def on_command_error(ctx, error):
@@ -57,18 +67,20 @@ async def on_command_error(ctx, error):
         else:
             await ctx.send("This command is only available in channels marked NSFW")
 
-@bot.command(aliases=['pog'])
+
+@bot.command(aliases=["pog"])
 async def ping(ctx):
     ping = round(bot.latency * 1000)
     await ctx.send(f"{ping}ms")
     logging.info(f"{ping}ms")
 
-@bot.command(aliases=['jasså'])
+
+@bot.command(aliases=["jasså"])
 async def jassa(ctx, args):
     await ctx.message.add_reaction(ok)
     name = hashlib.md5(args.encode()).hexdigest()
-    filename = "/jassa-bot/output/"+name+".mp4"
-    optimized ="/jassa-bot/output/optimized/"+name+".gif"
+    filename = "/jassa-bot/output/" + name + ".mp4"
+    optimized = "/jassa-bot/output/optimized/" + name + ".gif"
 
     if os.path.isfile(optimized):
         logging.info("Gif exists, sending file")
@@ -76,20 +88,30 @@ async def jassa(ctx, args):
     else:
         logging.info("Making new gif")
         start_time = time.time()
-        video = VideoFileClip(os.path.abspath("media/jassa_template.mp4")).subclip(0,3)
+        video = VideoFileClip(os.path.abspath("media/jassa_template.mp4")).subclip(0, 3)
 
-        txt_clip = ( TextClip(args,fontsize=33,color='white',font='ProximaNova-Semibold.otf')
-                    .set_position((160,655))
-                    .set_duration(3) )
+        txt_clip = (
+            TextClip(args, fontsize=33, color="white", font="ProximaNova-Semibold.otf")
+            .set_position((160, 655))
+            .set_duration(3)
+        )
 
         result = CompositeVideoClip([video, txt_clip])
         result.write_videofile(filename)
         # New better ffmpeg options
-        os.system("ffmpeg -y -i "+filename+" -i media/palette.png -lavfi 'fps=19,scale=480:-1:flags=lanczos,paletteuse=dither=bayer:bayer_scale=5:diff_mode=rectangle' "+optimized)
+        os.system(
+            "ffmpeg -y -i "
+            + filename
+            + " -i media/palette.png -lavfi 'fps=19,scale=480:-1:flags=lanczos,paletteuse=dither=bayer:bayer_scale=5:diff_mode=rectangle' "
+            + optimized
+        )
 
         await ctx.send(file=discord.File(optimized))
         stop_time = time.time()
-        logging.info(f"Successfully generated gif with {args} in {stop_time-start_time} seconds")
+        logging.info(
+            f"Successfully generated gif with {args} in {stop_time-start_time} seconds"
+        )
+
 
 @jassa.error
 async def jassa_error(ctx, error):
@@ -97,7 +119,8 @@ async def jassa_error(ctx, error):
         await ctx.message.add_reaction(no)
         await ctx.send("Mangler navn (eller noe annet).\nRiktig bruk: `+jasså <navn>`")
 
-@bot.command(aliases=['rule34'])
+
+@bot.command(aliases=["rule34"])
 @commands.is_nsfw()
 async def r34(ctx, *, tags):
     # Check for illegal tags
@@ -107,12 +130,12 @@ async def r34(ctx, *, tags):
     else:
         logging.info(f"Rule34: Searching for {tags}")
         await ctx.message.add_reaction(ok)
-        xml_url = rule34.URLGen(tags+"+-cub -loli -underage -shotacon -shota")
+        xml_url = rule34.URLGen(tags + "+-cub -loli -underage -shotacon -shota")
         logging.info(f"Got API url for {tags}: {xml_url}")
         xml = bs(requests.get(xml_url).text, "lxml")
         urls = []
         for post in xml.findAll("post"):
-            file_url = post.attrs['file_url']
+            file_url = post.attrs["file_url"]
             urls += [file_url]
         count = len(urls)
         count_text = str(count)
@@ -127,16 +150,21 @@ async def r34(ctx, *, tags):
             logging.info(f"Rule34: No posts were found with the tag(s): {tags}")
             await ctx.send(f"No posts were found with the tag(s): {tags}")
 
+
 @r34.error
 async def r34_error(ctx, error):
     if isinstance(error, commands.MissingRequiredArgument):
         await ctx.message.add_reaction(no)
-        await ctx.send("Missing tags to search for.\nUsage: `+r34/rule34 <tags>` or for multiple tags `+r34/rule34 <tag1> <tag2> ...`")
+        await ctx.send(
+            "Missing tags to search for.\nUsage: `+r34/rule34 <tags>` or for multiple tags `+r34/rule34 <tag1> <tag2> ...`"
+        )
+
 
 @bot.command()
 @commands.is_owner()
 async def close(ctx):
     ctx.add_reaction(ok)
     await bot.close()
+
 
 bot.run(token)
