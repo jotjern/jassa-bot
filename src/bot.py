@@ -89,10 +89,14 @@ async def jassa(ctx, args):
         else:
             logging.info("Making new gif")
             start_time = time.time()
-            video = VideoFileClip(os.path.abspath("media/jassa_template.mp4")).subclip(0, 3)
+            video = VideoFileClip(os.path.abspath("media/jassa_template.mp4")).subclip(
+                0, 3
+            )
 
             txt_clip = (
-                TextClip(args, fontsize=33, color="white", font="ProximaNova-Semibold.otf")
+                TextClip(
+                    args, fontsize=33, color="white", font="ProximaNova-Semibold.otf"
+                )
                 .set_position((160, 655))
                 .set_duration(3)
             )
@@ -108,7 +112,7 @@ async def jassa(ctx, args):
             )
 
             await ctx.send(file=discord.File(optimized))
-        
+
         stop_time = time.time()
         logging.info(
             f"Successfully generated gif with {args} in {stop_time-start_time} seconds"
