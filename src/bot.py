@@ -10,7 +10,11 @@ from bs4 import BeautifulSoup as bs
 import random
 import time
 import sys
+from dotenv import load_dotenv
 
+if os.path.isfile("./.env"):
+    print("[DEV] .env file found, using them")
+    load_dotenv()
 token = os.environ["BOT_TOKEN"]
 ownerid = os.environ["OWNER_ID"]
 
@@ -119,6 +123,14 @@ async def jassa_error(ctx, error):
         await ctx.message.add_reaction(no)
         await ctx.send("Mangler navn (eller noe annet).\nRiktig bruk: `+jasså <navn>`")
 
+@bot.command()
+async def move(ctx, args):
+    # TODO: Make this command move ALL users in same vc as the one giving command, also require move members permission in Discord server
+    await ctx.message.add_reaction(ok)
+    user = ctx.message.author
+    channel = discord.utils.find(lambda x: x.id == int(args), ctx.guild.voice_channels)
+    logging.info(channel)
+    await user.move_to(channel)
 
 @bot.command(aliases=["rule34"])
 @commands.is_nsfw()
@@ -163,7 +175,7 @@ async def r34_error(ctx, error):
 @bot.command()
 @commands.is_owner()
 async def close(ctx):
-    ctx.add_reaction(ok)
+    ctx.add_reaction("👋")
     await bot.close()
 
 
