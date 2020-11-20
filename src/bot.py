@@ -78,35 +78,37 @@ async def ping(ctx):
 @bot.command(aliases=["jasså"])
 async def jassa(ctx, args):
     await ctx.message.add_reaction(ok)
-    name = hashlib.md5(args.encode()).hexdigest()
-    filename = "/jassa-bot/output/" + name + ".mp4"
-    optimized = "/jassa-bot/output/optimized/" + name + ".gif"
+    async with ctx.channel.typing():
+        name = hashlib.md5(args.encode()).hexdigest()
+        filename = "/jassa-bot/output/" + name + ".mp4"
+        optimized = "/jassa-bot/output/optimized/" + name + ".gif"
 
-    if os.path.isfile(optimized):
-        logging.info("Gif exists, sending file")
-        await ctx.send(file=discord.File(optimized))
-    else:
-        logging.info("Making new gif")
-        start_time = time.time()
-        video = VideoFileClip(os.path.abspath("media/jassa_template.mp4")).subclip(0, 3)
+        if os.path.isfile(optimized):
+            logging.info("Gif exists, sending file")
+            await ctx.send(file=discord.File(optimized))
+        else:
+            logging.info("Making new gif")
+            start_time = time.time()
+            video = VideoFileClip(os.path.abspath("media/jassa_template.mp4")).subclip(0, 3)
 
-        txt_clip = (
-            TextClip(args, fontsize=33, color="white", font="ProximaNova-Semibold.otf")
-            .set_position((160, 655))
-            .set_duration(3)
-        )
+            txt_clip = (
+                TextClip(args, fontsize=33, color="white", font="ProximaNova-Semibold.otf")
+                .set_position((160, 655))
+                .set_duration(3)
+            )
 
-        result = CompositeVideoClip([video, txt_clip])
-        result.write_videofile(filename)
-        # New better ffmpeg options
-        os.system(
-            "ffmpeg -y -i "
-            + filename
-            + " -i media/palette.png -lavfi 'fps=19,scale=480:-1:flags=lanczos,paletteuse=dither=bayer:bayer_scale=5:diff_mode=rectangle' "
-            + optimized
-        )
+            result = CompositeVideoClip([video, txt_clip])
+            result.write_videofile(filename)
+            # New better ffmpeg options
+            os.system(
+                "ffmpeg -y -i "
+                + filename
+                + " -i media/palette.png -lavfi 'fps=19,scale=480:-1:flags=lanczos,paletteuse=dither=bayer:bayer_scale=5:diff_mode=rectangle' "
+                + optimized
+            )
 
-        await ctx.send(file=discord.File(optimized))
+            await ctx.send(file=discord.File(optimized))
+        
         stop_time = time.time()
         logging.info(
             f"Successfully generated gif with {args} in {stop_time-start_time} seconds"
