@@ -10,7 +10,12 @@ from bs4 import BeautifulSoup as bs
 import random
 import time
 import sys
+from dotenv import load_dotenv
 
+# Check for and use dev environment variables
+if os.path.isfile("./.env"):
+    print("[DEV] .env file found, using them")
+    load_dotenv()
 token = os.environ["BOT_TOKEN"]
 ownerid = os.environ["OWNER_ID"]
 
@@ -54,6 +59,11 @@ except PermissionError as e:
 async def on_ready():
     await bot.change_presence(activity=discord.Game("+jasså"))
     logging.info(f"Logged in as {bot.user}")
+
+
+@bot.event
+async def on_command(ctx):
+    logging.info(f"{ctx.message.author} called {ctx.command}")
 
 
 @bot.event
@@ -126,6 +136,36 @@ async def jassa_error(ctx, error):
         await ctx.send("Mangler navn (eller noe annet).\nRiktig bruk: `+jasså <navn>`")
 
 
+@bot.command()
+@commands.has_guild_permissions(move_members=True)
+async def moveall(ctx, *, channel: discord.VoiceChannel):
+    await ctx.message.add_reaction(ok)
+    # TODO: Figure out how to set an alias for a channel, as of now this if statement doesn't do anything
+    if channel == "uhc" and ctx.guild.id == 299979307827200001:
+        print(ctx.guild.id)
+    else:
+        # Stupid (possible) workaround to be able to use uhc alias, however removes possibility to just type names of channels
+        # * channel = discord.utils.find(lambda x: x.id == int(args), ctx.guild.voice_channels)
+        for members in ctx.message.author.voice.channel.members:
+            await members.move_to(channel)
+            logging.info(f"Moved {members} to {channel} in {ctx.guild}")
+
+
+@moveall.error
+async def moveall_error(ctx, error):
+    await ctx.message.add_reaction(no)
+    if isinstance(error, commands.MissingRequiredArgument):
+        await ctx.send(
+            "Missing voice channel ID/name to move to. Usage: `+moveall <vc id/name>`"
+        )
+    if isinstance(error, commands.ChannelNotFound):
+        await ctx.send("Unable to find channel")
+    if isinstance(error, commands.MissingPermissions):
+        await ctx.send(
+            "You don't have the required permissions for this command (Move Members)"
+        )
+
+
 @bot.command(aliases=["rule34"])
 @commands.is_nsfw()
 async def r34(ctx, *, tags):
@@ -169,7 +209,7 @@ async def r34_error(ctx, error):
 @bot.command()
 @commands.is_owner()
 async def close(ctx):
-    ctx.add_reaction(ok)
+    ctx.add_reaction("👋")
     await bot.close()
 
 
