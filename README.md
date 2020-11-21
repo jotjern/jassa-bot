@@ -12,7 +12,7 @@ Also serves as a replacement for [kawaiibot](https://github.com/KawaiiBot/Kawaii
 ###### God, please forgive me 🙏
 
 ## To use on your own server
-To use the bot just invite the bot that I'm hosting with this [Invite Link](https://discord.com/api/oauth2/authorize?client_id=751534353401512088&permissions=0&scope=bot)
+To use the bot just invite the bot that I'm hosting with this [Invite Link](https://discord.com/api/oauth2/authorize?client_id=751534353401512088&permissions=16813120&scope=bot)
 
 Or you could run the bot yourself with Docker. Simply replace the placeholders and run the command:
 ```
