@@ -1,5 +1,3 @@
-from discord.channel import VoiceChannel
-from discord.ext.commands.core import has_permissions
 from moviepy.editor import VideoFileClip, TextClip, CompositeVideoClip
 import os
 import logging
@@ -62,9 +60,11 @@ async def on_ready():
     await bot.change_presence(activity=discord.Game("+jasså"))
     logging.info(f"Logged in as {bot.user}")
 
+
 @bot.event
 async def on_command(ctx):
     logging.info(f"{ctx.message.author} called {ctx.command}")
+
 
 @bot.event
 async def on_command_error(ctx, error):
@@ -129,6 +129,7 @@ async def jassa_error(ctx, error):
         await ctx.message.add_reaction(no)
         await ctx.send("Mangler navn (eller noe annet).\nRiktig bruk: `+jasså <navn>`")
 
+
 @bot.command()
 @commands.has_guild_permissions(move_members=True)
 async def moveall(ctx, *, channel: discord.VoiceChannel):
@@ -142,18 +143,22 @@ async def moveall(ctx, *, channel: discord.VoiceChannel):
         for members in ctx.message.author.voice.channel.members:
             await members.move_to(channel)
             logging.info(f"Moved {members} to {channel} in {ctx.guild}")
-    
 
 
 @moveall.error
 async def moveall_error(ctx, error):
     await ctx.message.add_reaction(no)
-    if isinstance (error, commands.MissingRequiredArgument):
-        await ctx.send("Missing voice channel ID/name to move to. Usage: `+moveall <vc id/name>`")
-    if isinstance (error, commands.ChannelNotFound):
+    if isinstance(error, commands.MissingRequiredArgument):
+        await ctx.send(
+            "Missing voice channel ID/name to move to. Usage: `+moveall <vc id/name>`"
+        )
+    if isinstance(error, commands.ChannelNotFound):
         await ctx.send("Unable to find channel")
-    if isinstance (error, commands.MissingPermissions):
-        await ctx.send("You don't have the required permissions for this command (Move Members)")
+    if isinstance(error, commands.MissingPermissions):
+        await ctx.send(
+            "You don't have the required permissions for this command (Move Members)"
+        )
+
 
 @bot.command(aliases=["rule34"])
 @commands.is_nsfw()
