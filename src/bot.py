@@ -1,3 +1,5 @@
+from discord.channel import VoiceChannel
+from discord.ext.commands.core import has_permissions
 from moviepy.editor import VideoFileClip, TextClip, CompositeVideoClip
 import os
 import logging
@@ -12,6 +14,7 @@ import time
 import sys
 from dotenv import load_dotenv
 
+# Check for and use dev environment variables
 if os.path.isfile("./.env"):
     print("[DEV] .env file found, using them")
     load_dotenv()
@@ -59,6 +62,9 @@ async def on_ready():
     await bot.change_presence(activity=discord.Game("+jasså"))
     logging.info(f"Logged in as {bot.user}")
 
+@bot.event
+async def on_command(ctx):
+    logging.info(f"{ctx.message.author} called {ctx.command}")
 
 @bot.event
 async def on_command_error(ctx, error):
@@ -124,13 +130,30 @@ async def jassa_error(ctx, error):
         await ctx.send("Mangler navn (eller noe annet).\nRiktig bruk: `+jasså <navn>`")
 
 @bot.command()
-async def move(ctx, args):
-    # TODO: Make this command move ALL users in same vc as the one giving command, also require move members permission in Discord server
+@commands.has_guild_permissions(move_members=True)
+async def moveall(ctx, *, channel: discord.VoiceChannel):
     await ctx.message.add_reaction(ok)
-    user = ctx.message.author
-    channel = discord.utils.find(lambda x: x.id == int(args), ctx.guild.voice_channels)
-    logging.info(channel)
-    await user.move_to(channel)
+    # TODO: Figure out how to set an alias for a channel, as of now this if statement doesn't do anything
+    if channel == "uhc" and ctx.guild.id == 299979307827200001:
+        print(ctx.guild.id)
+    else:
+        # Stupid (possible) workaround to be able to use uhc alias, however removes possibility to just type names of channels
+        # * channel = discord.utils.find(lambda x: x.id == int(args), ctx.guild.voice_channels)
+        for members in ctx.message.author.voice.channel.members:
+            await members.move_to(channel)
+            logging.info(f"Moved {members} to {channel} in {ctx.guild}")
+    
+
+
+@moveall.error
+async def moveall_error(ctx, error):
+    await ctx.message.add_reaction(no)
+    if isinstance (error, commands.MissingRequiredArgument):
+        await ctx.send("Missing voice channel ID/name to move to. Usage: `+moveall <vc id/name>`")
+    if isinstance (error, commands.ChannelNotFound):
+        await ctx.send("Unable to find channel")
+    if isinstance (error, commands.MissingPermissions):
+        await ctx.send("You don't have the required permissions for this command (Move Members)")
 
 @bot.command(aliases=["rule34"])
 @commands.is_nsfw()
