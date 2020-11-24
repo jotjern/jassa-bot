@@ -30,7 +30,10 @@ logging.basicConfig(
 
 rule34 = rule34.Sync()
 
-bot = commands.Bot(command_prefix="+", owner_id=ownerid)
+intents = discord.Intents().default()
+intents.members = True
+
+bot = commands.Bot(command_prefix="+", owner_id=ownerid, intents=intents)
 
 # Emojis :)
 ok = "✅"
@@ -140,7 +143,7 @@ async def jassa_error(ctx, error):
 @commands.has_guild_permissions(move_members=True)
 async def moveall(ctx, *, channel: discord.VoiceChannel):
     await ctx.message.add_reaction(ok)
-    # TODO: Figure out how to set an alias for a channel, as of now this if statement doesn't do anything
+    # TODO: Figure out how to set an alias for a channel, as of now this if statement doesn't do anything OR add command to add alias (save this to something?)
     if channel == "uhc" and ctx.guild.id == 299979307827200001:
         print(ctx.guild.id)
     else:
@@ -164,6 +167,35 @@ async def moveall_error(ctx, error):
         await ctx.send(
             "You don't have the required permissions for this command (Move Members)"
         )
+
+
+@bot.command(aliases=["lb", "rolelb"])
+async def roleleaderboard(ctx, arg: str = None):
+    # ? Maybe use a switch statement here...
+    if arg is None:
+        limit = 11
+    elif arg == "full":
+        limit = -999999
+    else:
+        limit = int(arg) + 1
+    await ctx.message.add_reaction(ok)
+    members_list = ctx.guild.members
+    roles = {}
+    for member in members_list:
+        roles[member.display_name] = len(member.roles)
+    sorted_list = {
+        k: v for k, v in sorted(roles.items(), key=lambda item: item[1], reverse=True)
+    }
+    embed = discord.Embed(colour=discord.Colour.gold())
+    value_string = ""
+    role_place = 1
+    for item in sorted_list.items():
+        if role_place == limit:
+            break
+        value_string += f"{role_place}. {item[0]}: {item[1]} roles\n"
+        role_place += 1
+    embed.add_field(name="Role leaderboard", value=value_string)
+    await ctx.send(embed=embed)
 
 
 @bot.command(aliases=["rule34"])
