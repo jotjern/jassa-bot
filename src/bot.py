@@ -1,3 +1,4 @@
+from discord.errors import HTTPException
 from moviepy.editor import VideoFileClip, TextClip, CompositeVideoClip
 import os
 import logging
@@ -71,6 +72,7 @@ async def on_command(ctx):
 
 @bot.event
 async def on_command_error(ctx, error):
+    await ctx.message.remove_reaction(ok, bot.user)
     logging.warning(error)
     if isinstance(error, commands.NSFWChannelRequired):
         await ctx.message.add_reaction(nsfw)
@@ -91,6 +93,7 @@ async def ping(ctx):
 @bot.command(aliases=["jasså"])
 async def jassa(ctx, args):
     await ctx.message.add_reaction(ok)
+    start_time = time.time()
     async with ctx.channel.typing():
         name = hashlib.md5(args.encode()).hexdigest()
         filename = "/jassa-bot/output/" + name + ".mp4"
@@ -101,7 +104,6 @@ async def jassa(ctx, args):
             await ctx.send(file=discord.File(optimized))
         else:
             logging.info("Making new gif")
-            start_time = time.time()
             video = VideoFileClip(os.path.abspath("media/jassa_template.mp4")).subclip(
                 0, 3
             )
@@ -143,15 +145,12 @@ async def jassa_error(ctx, error):
 @commands.has_guild_permissions(move_members=True)
 async def moveall(ctx, *, channel: discord.VoiceChannel):
     await ctx.message.add_reaction(ok)
-    # TODO: Figure out how to set an alias for a channel, as of now this if statement doesn't do anything OR add command to add alias (save this to something?)
-    if channel == "uhc" and ctx.guild.id == 299979307827200001:
-        print(ctx.guild.id)
-    else:
-        # Stupid (possible) workaround to be able to use uhc alias, however removes possibility to just type names of channels
-        # * channel = discord.utils.find(lambda x: x.id == int(args), ctx.guild.voice_channels)
-        for members in ctx.message.author.voice.channel.members:
-            await members.move_to(channel)
-            logging.info(f"Moved {members} to {channel} in {ctx.guild}")
+    # TODO: Figure out how to set an alias for a channel, as of now this if statement doesn't do anything OR add command to add alias (save this to something? new command?)
+    # * Stupid (possible) workaround to be able to use uhc alias, however removes possibility to just type names of channels
+    # * channel = discord.utils.find(lambda x: x.id == int(args), ctx.guild.voice_channels)
+    for members in ctx.message.author.voice.channel.members:
+        await members.move_to(channel)
+        logging.info(f"Moved {members} to {channel} in {ctx.guild}")
 
 
 @moveall.error
@@ -196,6 +195,15 @@ async def roleleaderboard(ctx, arg: str = None):
         role_place += 1
     embed.add_field(name="Role leaderboard", value=value_string)
     await ctx.send(embed=embed)
+
+
+@roleleaderboard.error
+async def lb_error(ctx, error):
+    await ctx.message.add_reaction(no)
+    await ctx.send("Too many users to display, please try a lower value")
+    # TODO: Fix this exception not registering
+    if isinstance(error.original, discord.HTTPException):
+        logger.info("HTTPException triggered")
 
 
 @bot.command(aliases=["rule34"])
