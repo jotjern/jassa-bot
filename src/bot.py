@@ -1,4 +1,3 @@
-from discord.errors import HTTPException
 from moviepy.editor import VideoFileClip, TextClip, CompositeVideoClip
 import os
 import logging
