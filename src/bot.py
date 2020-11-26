@@ -170,40 +170,53 @@ async def moveall_error(ctx, error):
 
 @bot.command(aliases=["lb", "rolelb"])
 async def roleleaderboard(ctx, arg: str = None):
-    # ? Maybe use a switch statement here...
-    if arg is None:
-        limit = 11
-    elif arg == "full":
-        limit = -999999
-    else:
-        limit = int(arg) + 1
-    await ctx.message.add_reaction(ok)
-    members_list = ctx.guild.members
-    roles = {}
-    for member in members_list:
-        roles[member.display_name] = len(member.roles)
-    sorted_list = {
-        k: v for k, v in sorted(roles.items(), key=lambda item: item[1], reverse=True)
-    }
-    embed = discord.Embed(colour=discord.Colour.gold())
-    value_string = ""
-    role_place = 1
-    for item in sorted_list.items():
-        if role_place == limit:
-            break
-        value_string += f"{role_place}. {item[0]}: {item[1]} roles\n"
-        role_place += 1
-    embed.add_field(name="Role leaderboard", value=value_string)
-    await ctx.send(embed=embed)
+    try:
+        await ctx.message.add_reaction(ok)
+        # ? Maybe use a switch statement here...
+        if arg is None:
+            limit = 11
+        elif arg == "full":
+            limit = -999999
+        else:
+            limit = int(arg) + 1
+        members_list = ctx.guild.members
+        roles = {}
+        for member in members_list:
+            roles[member.display_name] = len(member.roles)
+        sorted_list = {
+            k: v
+            for k, v in sorted(roles.items(), key=lambda item: item[1], reverse=True)
+        }
+        embed = discord.Embed(colour=discord.Colour.gold())
+        value_string = ""
+        role_place = 1
+        for item in sorted_list.items():
+            if role_place == limit:
+                break
+            username = discord.utils.escape_markdown(item[0], ignore_links=False)
+            value_string += f"{role_place}. {username}: {item[1]} roles\n"
+            role_place += 1
+        if len(value_string) <= 2000:
+            embed.add_field(name="Role leaderboard", value=value_string)
+            await ctx.send(embed=embed)
+        else:
+            await ctx.message.remove_reaction(ok, bot.user)
+            await ctx.message.add_reaction(no)
+            ctx.send("Too many users to display, please try a lower value")
+    except ValueError:
+        await ctx.message.add_reaction(no)
+        await ctx.message.remove_reaction(ok, bot.user)
+        await ctx.send("Command only accepts either numbers or `full` as arguments")
 
 
 @roleleaderboard.error
 async def lb_error(ctx, error):
+    # TODO: Figure out how to catch a Python error via .error instead of using try/catch
     await ctx.message.add_reaction(no)
-    await ctx.send("Too many users to display, please try a lower value")
-    # TODO: Fix this exception not registering
-    if isinstance(error.original, discord.HTTPException):
-        logger.info("HTTPException triggered")
+    if isinstance(error, ValueError):
+        await ctx.send("Command only accepts either numbers or `full` as arguments")
+    else:
+        await ctx.send("An error occurred")
 
 
 @bot.command(aliases=["rule34"])
