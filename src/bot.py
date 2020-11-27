@@ -195,7 +195,7 @@ async def roleleaderboard(ctx, arg: str = None):
             username = discord.utils.escape_markdown(item[0], ignore_links=False)
             value_string += f"{role_place}. {username}: {item[1]} roles\n"
             role_place += 1
-        if len(value_string) <= 2000:
+        if len(value_string) <= 1024:
             embed.add_field(name="Role leaderboard", value=value_string)
             await ctx.send(embed=embed)
         else:
