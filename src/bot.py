@@ -80,6 +80,9 @@ async def on_command_error(ctx, error):
             await ctx.send("IKKE I GENERAL DA! KUN I <#607395883239342080>")
         else:
             await ctx.send("This command is only available in channels marked NSFW")
+    if isinstance(error, commands.NotOwner):
+        await ctx.message.add_reaction(no)
+        await ctx.send("You have to be the bot owner to use this command")
 
 
 @bot.command(aliases=["pog"])
@@ -212,10 +215,6 @@ async def roleleaderboard(ctx, arg: str = None):
 async def lb_error(ctx, error):
     # TODO: Figure out how to catch a Python error via .error instead of using try/catch
     await ctx.message.add_reaction(no)
-    if isinstance(error, ValueError):
-        await ctx.send("Command only accepts either numbers or `full` as arguments")
-    else:
-        await ctx.send("An error occurred")
 
 
 @bot.command(aliases=["rule34"])
