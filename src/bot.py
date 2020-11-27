@@ -196,15 +196,16 @@ async def roleleaderboard(ctx, arg: str = None):
             if role_place == limit:
                 break
             username = discord.utils.escape_markdown(item[0], ignore_links=False)
-            value_string += f"{role_place}. {username}: {item[1]} roles\n"
+            current = f"{role_place}. {username}: {item[1]} roles\n"
+            if len(value_string) + len(current) >= 1024:
+                await ctx.send("Too many users, displaying as many as possible")
+                break
+            else:
+                value_string += current
             role_place += 1
-        if len(value_string) <= 1024:
-            embed.add_field(name="Role leaderboard", value=value_string)
-            await ctx.send(embed=embed)
-        else:
-            await ctx.message.remove_reaction(ok, bot.user)
-            await ctx.message.add_reaction(no)
-            await ctx.send("Too many users to display, please try a lower value")
+            # TODO: Make it cutoff if over character limit and display whats possible.
+        embed.add_field(name="Role leaderboard", value=value_string)
+        await ctx.send(embed=embed)
     except ValueError:
         await ctx.message.add_reaction(no)
         await ctx.message.remove_reaction(ok, bot.user)
@@ -215,10 +216,6 @@ async def roleleaderboard(ctx, arg: str = None):
 async def lb_error(ctx, error):
     # TODO: Figure out how to catch a Python error via .error instead of using try/catch
     await ctx.message.add_reaction(no)
-    if isinstance(error, ValueError):
-        await ctx.send("Command only accepts either numbers or `full` as arguments")
-    else:
-        await ctx.send("An error occurred")
 
 
 @bot.command(aliases=["rule34"])
