@@ -203,7 +203,6 @@ async def roleleaderboard(ctx, arg: str = None):
             else:
                 value_string += current
             role_place += 1
-            # TODO: Make it cutoff if over character limit and display whats possible.
         embed.add_field(name="Role leaderboard", value=value_string)
         await ctx.send(embed=embed)
     except ValueError:
