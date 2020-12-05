@@ -72,7 +72,8 @@ async def on_command(ctx):
 @bot.event
 async def on_command_error(ctx, error):
     await ctx.message.remove_reaction(ok, bot.user)
-    logging.warning(error)
+    if not isinstance(error, commands.CommandNotFound):
+        logging.warning(error)
     if isinstance(error, commands.NSFWChannelRequired):
         await ctx.message.add_reaction(nsfw)
         # Only send meme response in the right discord server
