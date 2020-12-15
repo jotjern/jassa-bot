@@ -11,6 +11,8 @@ import random
 import time
 import sys
 from dotenv import load_dotenv
+import json
+import stat
 
 # Check for and use dev environment variables
 if os.path.isfile("./.env"):
@@ -51,6 +53,12 @@ try:
     else:
         os.makedirs("/jassa-bot/output/optimized")
         logging.info("Made output folders, persistence is now enabled")
+    if not os.path.isfile("/jassa-bot/aliases.json"):
+        logging.info("Missing aliases.json, making file")
+        with open("/jassa-bot/aliases.json", "a") as f:
+            f.write("{}")
+        os.chmod("/jassa-bot/aliases.json", stat.S_IRWXO)
+        # TODO: Fix permissions for file(s)
 except PermissionError as e:
     logging.warning(e)
     logging.warning(
@@ -144,16 +152,16 @@ async def jassa_error(ctx, error):
         await ctx.send("Mangler navn (eller noe annet).\nRiktig bruk: `+jasså <navn>`")
 
 
-@bot.command()
+@bot.command(aliases=["mv"])
 @commands.has_guild_permissions(move_members=True)
-async def moveall(ctx, *, channel: discord.VoiceChannel):
+async def moveall(ctx, *, channel: str):
     await ctx.message.add_reaction(ok)
     # TODO: Figure out how to set an alias for a channel, as of now this if statement doesn't do anything OR add command to add alias (save this to something? new command?)
     # * Stupid (possible) workaround to be able to use uhc alias, however removes possibility to just type names of channels
     # * channel = discord.utils.find(lambda x: x.id == int(args), ctx.guild.voice_channels)
-    for members in ctx.message.author.voice.channel.members:
-        await members.move_to(channel)
-        logging.info(f"Moved {members} to {channel} in {ctx.guild}")
+    for member in ctx.message.author.voice.channel.members:
+        await member.move_to(channel)
+        logging.info(f"Moved {member} to {channel} in {ctx.guild}")
 
 
 @moveall.error
@@ -169,6 +177,25 @@ async def moveall_error(ctx, error):
         await ctx.send(
             "You don't have the required permissions for this command (Move Members)"
         )
+
+
+@bot.command(aliases=["mvalias", "movealias"])
+@commands.has_guild_permissions(administrator=True)
+async def alias(ctx, channel: discord.VoiceChannel, alias: str = None):
+    await ctx.message.add_reaction(ok)
+    with open("/jassa-bot/aliases.json", "r") as f:
+        aliases = json.load(f)
+
+    if alias is None:
+        aliases[str(ctx.guild.id)].pop(str(channel.id))
+    else:
+        alias_list = {}
+        alias_list[str(channel.id)] = alias
+        aliases[str(ctx.guild.id)].update(alias_list)
+        print(aliases)
+
+    with open("/jassa-bot/aliases.json", "w") as f:
+        json.dump(aliases, f, indent=4)
 
 
 @bot.command(aliases=["lb", "rolelb"])
