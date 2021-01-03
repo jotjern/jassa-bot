@@ -14,6 +14,8 @@ from dotenv import load_dotenv
 import json
 import stat
 
+# TODO: Make a tarkov wiki search for item uses (trading/hideout/quests)
+
 # Check for and use dev environment variables
 if os.path.isfile("./.env"):
     print("[DEV] .env file found, using them")
