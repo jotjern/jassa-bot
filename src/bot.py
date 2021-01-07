@@ -60,7 +60,6 @@ try:
         with open("/jassa-bot/aliases.json", "a") as f:
             f.write("{}")
         os.chmod("/jassa-bot/aliases.json", stat.S_IRWXO)
-        # TODO: Fix permissions for file(s)
 except PermissionError as e:
     logging.warning(e)
     logging.warning(
@@ -158,9 +157,6 @@ async def jassa_error(ctx, error):
 @commands.has_guild_permissions(move_members=True)
 async def moveall(ctx, *, channel: str):
     await ctx.message.add_reaction(ok)
-    # TODO: Figure out how to set an alias for a channel, as of now this if statement doesn't do anything OR add command to add alias (save this to something? new command?)
-    # * Stupid (possible) workaround to be able to use uhc alias, however removes possibility to just type names of channels
-    # *
     with open("/jassa-bot/aliases.json", "r") as f:
         aliases = json.load(f)
     try:
