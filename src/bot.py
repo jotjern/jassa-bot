@@ -11,6 +11,10 @@ import random
 import time
 import sys
 from dotenv import load_dotenv
+import json
+import stat
+
+# TODO: Make a tarkov wiki search for item uses (trading/hideout/quests)
 
 # Check for and use dev environment variables
 if os.path.isfile("./.env"):
@@ -51,6 +55,11 @@ try:
     else:
         os.makedirs("/jassa-bot/output/optimized")
         logging.info("Made output folders, persistence is now enabled")
+    if not os.path.isfile("/jassa-bot/aliases.json"):
+        logging.info("Missing aliases.json, making file")
+        with open("/jassa-bot/aliases.json", "a") as f:
+            f.write("{}")
+        os.chmod("/jassa-bot/aliases.json", stat.S_IRWXO)
 except PermissionError as e:
     logging.warning(e)
     logging.warning(
@@ -73,7 +82,7 @@ async def on_command(ctx):
 async def on_command_error(ctx, error):
     await ctx.message.remove_reaction(ok, bot.user)
     if not isinstance(error, commands.CommandNotFound):
-        logging.warning(error)
+        logging.warning(error + " in " + ctx.guild.name + ctx.channel.name)
     if isinstance(error, commands.NSFWChannelRequired):
         await ctx.message.add_reaction(nsfw)
         # Only send meme response in the right discord server
@@ -144,16 +153,23 @@ async def jassa_error(ctx, error):
         await ctx.send("Mangler navn (eller noe annet).\nRiktig bruk: `+jasså <navn>`")
 
 
-@bot.command()
+@bot.command(aliases=["mv"])
 @commands.has_guild_permissions(move_members=True)
-async def moveall(ctx, *, channel: discord.VoiceChannel):
+async def moveall(ctx, *, channel: str):
     await ctx.message.add_reaction(ok)
-    # TODO: Figure out how to set an alias for a channel, as of now this if statement doesn't do anything OR add command to add alias (save this to something? new command?)
-    # * Stupid (possible) workaround to be able to use uhc alias, however removes possibility to just type names of channels
-    # * channel = discord.utils.find(lambda x: x.id == int(args), ctx.guild.voice_channels)
-    for members in ctx.message.author.voice.channel.members:
-        await members.move_to(channel)
-        logging.info(f"Moved {members} to {channel} in {ctx.guild}")
+    with open("/jassa-bot/aliases.json", "r") as f:
+        aliases = json.load(f)
+    try:
+        channel = aliases[str(ctx.guild.id)][channel]
+        channel = bot.get_channel(int(channel))
+    except KeyError:
+        channel = discord.utils.find(
+            lambda x: x.name == channel, ctx.guild.voice_channels
+        )
+
+    for member in ctx.message.author.voice.channel.members:
+        await member.move_to(channel)
+        logging.info(f"Moved {member} to {channel} in {ctx.guild}")
 
 
 @moveall.error
@@ -171,11 +187,48 @@ async def moveall_error(ctx, error):
         )
 
 
+@bot.command(aliases=["mvalias", "movealias"])
+@commands.has_guild_permissions(administrator=True)
+async def alias(ctx, alias: str, channel: discord.VoiceChannel = None):
+    await ctx.message.add_reaction(ok)
+    with open("/jassa-bot/aliases.json", "r") as f:
+        aliases = json.load(f)
+    try:
+        aliases[str(ctx.guild.id)]
+    except KeyError:
+        print("Guild ID not already in list, adding it")
+        aliases[str(ctx.guild.id)] = {}
+
+    if channel is None:
+        await ctx.send(
+            f"Removed alias for channel ID {aliases[str(ctx.guild.id)][alias]}"
+        )
+        aliases[str(ctx.guild.id)].pop(alias)
+    else:
+        alias_list = {}
+        alias_list[alias] = str(channel.id)
+        aliases[str(ctx.guild.id)].update(alias_list)
+        await ctx.send("Added alias for channel")
+
+    with open("/jassa-bot/aliases.json", "w") as f:
+        json.dump(aliases, f, indent=4)
+
+
+@alias.error
+async def alias_error(ctx, error):
+    await ctx.message.add_reaction(no)
+    if isinstance(error, commands.MissingRequiredArgument):
+        await ctx.send(
+            "Missing alias and/or channel ID. Usage: `+alias <alias> <channel ID/name in quotes>`"
+        )
+    if isinstance(error, commands.ChannelNotFound):
+        await ctx.send("Unable to find channel")
+
+
 @bot.command(aliases=["lb", "rolelb"])
 async def roleleaderboard(ctx, arg: str = None):
     try:
         await ctx.message.add_reaction(ok)
-        # ? Maybe use a switch statement here...
         if arg is None:
             limit = 11
         elif arg == "full":
