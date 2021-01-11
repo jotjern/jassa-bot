@@ -1,6 +1,7 @@
 from moviepy.editor import VideoFileClip, TextClip, CompositeVideoClip
 import os
 import logging
+import coloredlogs
 import discord
 from discord.ext import commands
 import hashlib
@@ -10,16 +11,11 @@ from bs4 import BeautifulSoup as bs
 import random
 import time
 import sys
-from dotenv import load_dotenv
 import json
 import stat
 
 # TODO: Make a tarkov wiki search for item uses (trading/hideout/quests)
 
-# Check for and use dev environment variables
-if os.path.isfile("./.env"):
-    print("[DEV] .env file found, using them")
-    load_dotenv()
 token = os.environ["BOT_TOKEN"]
 ownerid = os.environ["OWNER_ID"]
 
@@ -30,6 +26,11 @@ logging.basicConfig(
     format="%(asctime)s [%(levelname)s]: %(message)s",
     datefmt="%Y-%m-%d %H:%M:%S",
     level=logging.INFO,
+)
+coloredlogs.install(
+    level="INFO",
+    fmt="%(asctime)s [%(levelname)s]: %(message)s",
+    datefmt="%Y-%m-%d %H:%M:%S",
 )
 
 rule34 = rule34.Sync()
@@ -82,7 +83,7 @@ async def on_command(ctx):
 async def on_command_error(ctx, error):
     await ctx.message.remove_reaction(ok, bot.user)
     if not isinstance(error, commands.CommandNotFound):
-        logging.warning(error + " in " + ctx.guild.name + ctx.channel.name)
+        logging.error(f"{error} in {ctx.guild.name}: {ctx.channel.name}")
     if isinstance(error, commands.NSFWChannelRequired):
         await ctx.message.add_reaction(nsfw)
         # Only send meme response in the right discord server
@@ -141,9 +142,7 @@ async def jassa(ctx, args):
             await ctx.send(file=discord.File(optimized))
 
         stop_time = time.time()
-        logging.info(
-            f"Successfully generated gif with {args} in {stop_time-start_time} seconds"
-        )
+        logging.info(f"Successfully generated gif with {args} in {stop_time-start_time} seconds")
 
 
 @jassa.error
@@ -151,6 +150,67 @@ async def jassa_error(ctx, error):
     if isinstance(error, commands.MissingRequiredArgument):
         await ctx.message.add_reaction(no)
         await ctx.send("Mangler navn (eller noe annet).\nRiktig bruk: `+jasså <navn>`")
+
+
+@bot.command(aliases=["q"])
+async def quest(ctx, *, args: str):
+    await ctx.message.add_reaction(ok)
+    # Get quests, trades and hideout importance
+    # Get images and display it in an embed
+    query = args.replace(" ", "+")
+    search_url = "https://escapefromtarkov.gamepedia.com/Special:Search?search=" + query
+    r = requests.get(search_url)
+    results = bs(r.text, "html.parser")
+    try:
+        result = results.find("a", class_="unified-search__result__title").get("href")
+        r = requests.get(result)
+        page = bs(r.text, "html.parser")
+    except AttributeError:
+        page = results
+    title = page.find("h1").get_text()
+    if "Search results for" in title:
+        await ctx.send(f"Unable to find {args}, try being more specific.")
+        return
+    embed = discord.Embed(title=title, url=r.url)
+    if page.find(id="Quests"):
+        quests = page.find(id="Quests").find_parent("h2").find_next_sibling("ul").find_all("li")
+        quests_string = ""
+        for quest in quests:
+            # TODO: Formatting (bold "in raid"), hyperlink to quest wiki page, make it a list maybe?
+            quest_name = quest.find("a").get_text()
+            quest_url = "https://escapefromtarkov.gamepedia.com" + quest.find("a").get("href")
+            text = quest.get_text()
+            if "in raid" in text:
+                text = text.replace("in raid", "**in raid**")
+            text = text.replace(quest_name, f"[{quest_name}]({quest_url})")
+            quests_string += text + "\n"
+        embed.add_field(name="Quests", value=quests_string, inline=False)
+    # TODO: Hideout uses, trading (barters), crafting
+    if page.find(id="Hideout"):
+        uses = page.find(id="Hideout").find_parent("h2").find_next_sibling("ul").find_all("li")
+        uses_string = ""
+        for use in uses:
+            uses_string += use.get_text() + "\n"
+        embed.add_field(name="Hideout", value=uses_string, inline=False)
+    if page.find(id="Trading"):
+        trades = page.find(id="Trading").find_parent("h2").find_next_sibling("table").find_all("tr")
+        trades_string = ""
+        for trade in trades:
+            th = trade.find_all("th")
+            trader = th[2].get_text().strip()
+            barter_in = th[0].get_text().strip()
+            barter_out = th[4].get_text().strip()
+            trades_string += f"**{trader}:** {barter_in} -> {barter_out} \n"
+        embed.add_field(name="Trading", value=trades_string, inline=False)
+    try:
+        icon = page.find("td", class_="va-infobox-icon").find("img").get("src")
+    except AttributeError:
+        # TODO: Make it so that it retries until it finds an item
+        await ctx.send(f'Found "{title}" ({r.url}), but it doesn\'t seem to be an item. Try to be more specific.')
+        return
+
+    embed.set_thumbnail(url=icon)
+    await ctx.send(embed=embed)
 
 
 @bot.command(aliases=["mv"])
@@ -163,9 +223,7 @@ async def moveall(ctx, *, channel: str):
         channel = aliases[str(ctx.guild.id)][channel]
         channel = bot.get_channel(int(channel))
     except KeyError:
-        channel = discord.utils.find(
-            lambda x: x.name == channel, ctx.guild.voice_channels
-        )
+        channel = discord.utils.find(lambda x: x.name == channel, ctx.guild.voice_channels)
 
     for member in ctx.message.author.voice.channel.members:
         await member.move_to(channel)
@@ -176,15 +234,11 @@ async def moveall(ctx, *, channel: str):
 async def moveall_error(ctx, error):
     await ctx.message.add_reaction(no)
     if isinstance(error, commands.MissingRequiredArgument):
-        await ctx.send(
-            "Missing voice channel ID/name to move to. Usage: `+moveall <vc id/name>`"
-        )
+        await ctx.send("Missing voice channel ID/name to move to. Usage: `+moveall <vc id/name>`")
     if isinstance(error, commands.ChannelNotFound):
         await ctx.send("Unable to find channel")
     if isinstance(error, commands.MissingPermissions):
-        await ctx.send(
-            "You don't have the required permissions for this command (Move Members)"
-        )
+        await ctx.send("You don't have the required permissions for this command (Move Members)")
 
 
 @bot.command(aliases=["mvalias", "movealias"])
@@ -200,9 +254,7 @@ async def alias(ctx, alias: str, channel: discord.VoiceChannel = None):
         aliases[str(ctx.guild.id)] = {}
 
     if channel is None:
-        await ctx.send(
-            f"Removed alias for channel ID {aliases[str(ctx.guild.id)][alias]}"
-        )
+        await ctx.send(f"Removed alias for channel ID {aliases[str(ctx.guild.id)][alias]}")
         aliases[str(ctx.guild.id)].pop(alias)
     else:
         alias_list = {}
@@ -218,9 +270,7 @@ async def alias(ctx, alias: str, channel: discord.VoiceChannel = None):
 async def alias_error(ctx, error):
     await ctx.message.add_reaction(no)
     if isinstance(error, commands.MissingRequiredArgument):
-        await ctx.send(
-            "Missing alias and/or channel ID. Usage: `+alias <alias> <channel ID/name in quotes>`"
-        )
+        await ctx.send("Missing alias and/or channel ID. Usage: `+alias <alias> <channel ID/name in quotes>`")
     if isinstance(error, commands.ChannelNotFound):
         await ctx.send("Unable to find channel")
 
@@ -239,10 +289,7 @@ async def roleleaderboard(ctx, arg: str = None):
         roles = {}
         for member in members_list:
             roles[member.display_name] = len(member.roles)
-        sorted_list = {
-            k: v
-            for k, v in sorted(roles.items(), key=lambda item: item[1], reverse=True)
-        }
+        sorted_list = {k: v for k, v in sorted(roles.items(), key=lambda item: item[1], reverse=True)}
         embed = discord.Embed(colour=discord.Colour.gold())
         value_string = ""
         role_place = 1
@@ -306,9 +353,7 @@ async def r34(ctx, *, tags):
 async def r34_error(ctx, error):
     if isinstance(error, commands.MissingRequiredArgument):
         await ctx.message.add_reaction(no)
-        await ctx.send(
-            "Missing tags to search for.\nUsage: `+r34/rule34 <tags>` or for multiple tags `+r34/rule34 <tag1> <tag2> ...`"
-        )
+        await ctx.send("Missing tags to search for.\nUsage: `+r34/rule34 <tags>` or for multiple tags `+r34/rule34 <tag1> <tag2> ...`")
 
 
 @bot.command()

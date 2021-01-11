@@ -9,7 +9,7 @@ moviepy = "*"
 rule34 = "*"
 bs4 = "*"
 lxml = "*"
-python-dotenv = "*"
+coloredlogs = "*"
 
 [dev-packages]
 pre-commit = "*"
