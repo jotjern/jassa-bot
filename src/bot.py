@@ -172,6 +172,7 @@ async def quest(ctx, *, args: str):
         await ctx.send(f"Unable to find {args}, try being more specific.")
         return
     embed = discord.Embed(title=title, url=r.url)
+    # ! Add crafting as well
     if page.find(id="Quests"):
         quests = page.find(id="Quests").find_parent("h2").find_next_sibling("ul").find_all("li")
         quests_string = ""
@@ -203,6 +204,7 @@ async def quest(ctx, *, args: str):
             trades_string += f"**{trader}:** {barter_in} -> {barter_out} \n"
         embed.add_field(name="Trading", value=trades_string, inline=False)
     try:
+        # ! Some items doesn't get detected due to not showing icon (knives)
         icon = page.find("td", class_="va-infobox-icon").find("img").get("src")
     except AttributeError:
         # TODO: Make it so that it retries until it finds an item
