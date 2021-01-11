@@ -142,9 +142,7 @@ async def jassa(ctx, args):
             await ctx.send(file=discord.File(optimized))
 
         stop_time = time.time()
-        logging.info(
-            f"Successfully generated gif with {args} in {stop_time-start_time} seconds"
-        )
+        logging.info(f"Successfully generated gif with {args} in {stop_time-start_time} seconds")
 
 
 @jassa.error
@@ -164,9 +162,7 @@ async def moveall(ctx, *, channel: str):
         channel = aliases[str(ctx.guild.id)][channel]
         channel = bot.get_channel(int(channel))
     except KeyError:
-        channel = discord.utils.find(
-            lambda x: x.name == channel, ctx.guild.voice_channels
-        )
+        channel = discord.utils.find(lambda x: x.name == channel, ctx.guild.voice_channels)
 
     for member in ctx.message.author.voice.channel.members:
         await member.move_to(channel)
@@ -177,15 +173,11 @@ async def moveall(ctx, *, channel: str):
 async def moveall_error(ctx, error):
     await ctx.message.add_reaction(no)
     if isinstance(error, commands.MissingRequiredArgument):
-        await ctx.send(
-            "Missing voice channel ID/name to move to. Usage: `+moveall <vc id/name>`"
-        )
+        await ctx.send("Missing voice channel ID/name to move to. Usage: `+moveall <vc id/name>`")
     if isinstance(error, commands.ChannelNotFound):
         await ctx.send("Unable to find channel")
     if isinstance(error, commands.MissingPermissions):
-        await ctx.send(
-            "You don't have the required permissions for this command (Move Members)"
-        )
+        await ctx.send("You don't have the required permissions for this command (Move Members)")
 
 
 @bot.command(aliases=["mvalias", "movealias"])
@@ -201,9 +193,7 @@ async def alias(ctx, alias: str, channel: discord.VoiceChannel = None):
         aliases[str(ctx.guild.id)] = {}
 
     if channel is None:
-        await ctx.send(
-            f"Removed alias for channel ID {aliases[str(ctx.guild.id)][alias]}"
-        )
+        await ctx.send(f"Removed alias for channel ID {aliases[str(ctx.guild.id)][alias]}")
         aliases[str(ctx.guild.id)].pop(alias)
     else:
         alias_list = {}
@@ -219,9 +209,7 @@ async def alias(ctx, alias: str, channel: discord.VoiceChannel = None):
 async def alias_error(ctx, error):
     await ctx.message.add_reaction(no)
     if isinstance(error, commands.MissingRequiredArgument):
-        await ctx.send(
-            "Missing alias and/or channel ID. Usage: `+alias <alias> <channel ID/name in quotes>`"
-        )
+        await ctx.send("Missing alias and/or channel ID. Usage: `+alias <alias> <channel ID/name in quotes>`")
     if isinstance(error, commands.ChannelNotFound):
         await ctx.send("Unable to find channel")
 
@@ -240,10 +228,7 @@ async def roleleaderboard(ctx, arg: str = None):
         roles = {}
         for member in members_list:
             roles[member.display_name] = len(member.roles)
-        sorted_list = {
-            k: v
-            for k, v in sorted(roles.items(), key=lambda item: item[1], reverse=True)
-        }
+        sorted_list = {k: v for k, v in sorted(roles.items(), key=lambda item: item[1], reverse=True)}
         embed = discord.Embed(colour=discord.Colour.gold())
         value_string = ""
         role_place = 1
@@ -307,9 +292,7 @@ async def r34(ctx, *, tags):
 async def r34_error(ctx, error):
     if isinstance(error, commands.MissingRequiredArgument):
         await ctx.message.add_reaction(no)
-        await ctx.send(
-            "Missing tags to search for.\nUsage: `+r34/rule34 <tags>` or for multiple tags `+r34/rule34 <tag1> <tag2> ...`"
-        )
+        await ctx.send("Missing tags to search for.\nUsage: `+r34/rule34 <tags>` or for multiple tags `+r34/rule34 <tag1> <tag2> ...`")
 
 
 @bot.command()
