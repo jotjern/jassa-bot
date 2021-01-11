@@ -1,6 +1,7 @@
 from moviepy.editor import VideoFileClip, TextClip, CompositeVideoClip
 import os
 import logging
+import coloredlogs
 import discord
 from discord.ext import commands
 import hashlib
@@ -10,16 +11,11 @@ from bs4 import BeautifulSoup as bs
 import random
 import time
 import sys
-from dotenv import load_dotenv
 import json
 import stat
 
 # TODO: Make a tarkov wiki search for item uses (trading/hideout/quests)
 
-# Check for and use dev environment variables
-if os.path.isfile("./.env"):
-    print("[DEV] .env file found, using them")
-    load_dotenv()
 token = os.environ["BOT_TOKEN"]
 ownerid = os.environ["OWNER_ID"]
 
@@ -30,6 +26,11 @@ logging.basicConfig(
     format="%(asctime)s [%(levelname)s]: %(message)s",
     datefmt="%Y-%m-%d %H:%M:%S",
     level=logging.INFO,
+)
+coloredlogs.install(
+    level="INFO",
+    fmt="%(asctime)s [%(levelname)s]: %(message)s",
+    datefmt="%Y-%m-%d %H:%M:%S",
 )
 
 rule34 = rule34.Sync()
@@ -82,7 +83,7 @@ async def on_command(ctx):
 async def on_command_error(ctx, error):
     await ctx.message.remove_reaction(ok, bot.user)
     if not isinstance(error, commands.CommandNotFound):
-        logging.warning(error + " in " + ctx.guild.name + ctx.channel.name)
+        logging.error(f"{error} in {ctx.guild.name}: {ctx.channel.name}")
     if isinstance(error, commands.NSFWChannelRequired):
         await ctx.message.add_reaction(nsfw)
         # Only send meme response in the right discord server
