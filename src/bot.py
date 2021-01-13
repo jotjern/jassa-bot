@@ -14,6 +14,9 @@ import sys
 import json
 import stat
 from urllib.parse import quote
+import traceback
+import io
+from datetime import datetime
 
 # TODO: Make a tarkov wiki search for item uses (trading/hideout/quests)
 
@@ -85,6 +88,13 @@ async def on_command_error(ctx, error):
     await ctx.message.remove_reaction(ok, bot.user)
     if not isinstance(error, commands.CommandNotFound):
         logging.error(f'"{error}" in {ctx.guild.name}: {ctx.channel.name}')
+        owner = bot.get_user(int(ownerid))
+        trace = traceback.format_exc()
+        if len(trace) < 2000:
+            await owner.send(f"**Guild:** {ctx.guild.name} **Channel:** {ctx.channel.name} **Time:** {datetime.now().strftime('%d/%m/%Y %H:%M:%S')}\n```\n{trace}\n```")
+        else:
+            await owner.send(f"Errored in {ctx.guild.name}, {ctx.channel.name} at {datetime.now().strftime('%d/%m/%Y %H:%M:%S')}")
+            await owner.send(file=discord.File(io.StringIO(trace), filename="traceback.txt"))
     if isinstance(error, commands.NSFWChannelRequired):
         await ctx.message.add_reaction(nsfw)
         # Only send meme response in the right discord server
@@ -163,16 +173,15 @@ async def quest(ctx, *, args: str):
     search_url = "https://escapefromtarkov.gamepedia.com/Special:Search?search=" + query
     r = requests.get(search_url)
     results = bs(r.text, "html.parser")
-    if len(r.history) > 0 and r.history[0].is_redirect:
-        page = results
-    else:
+    if results.find("a", class_="unified-search__result__title"):
         result = results.find("a", class_="unified-search__result__title").get("href")
         r = requests.get(result)
         page = bs(r.text, "html.parser")
-
+    else:
+        page = results
     title = page.find("h1").get_text()
     if "Search results for" in title:
-        await ctx.send(f"Unable to find {args}, try being more specific.")
+        await ctx.send(f"Unable to find {discord.utils.escape_markdown(args)}, try being more specific.")
         return
     embed = discord.Embed(title=title, url=r.url)
     if page.find(id="Quests"):
