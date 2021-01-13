@@ -13,6 +13,7 @@ import time
 import sys
 import json
 import stat
+from urllib.parse import quote
 
 # TODO: Make a tarkov wiki search for item uses (trading/hideout/quests)
 
@@ -83,7 +84,7 @@ async def on_command(ctx):
 async def on_command_error(ctx, error):
     await ctx.message.remove_reaction(ok, bot.user)
     if not isinstance(error, commands.CommandNotFound):
-        logging.error(f"{error} in {ctx.guild.name}: {ctx.channel.name}")
+        logging.error(f'"{error}" in {ctx.guild.name}: {ctx.channel.name}')
     if isinstance(error, commands.NSFWChannelRequired):
         await ctx.message.add_reaction(nsfw)
         # Only send meme response in the right discord server
@@ -157,27 +158,27 @@ async def quest(ctx, *, args: str):
     await ctx.message.add_reaction(ok)
     # Get quests, trades and hideout importance
     # Get images and display it in an embed
-    query = args.replace(" ", "+")
+    # query = args.replace(" ", "+")
+    query = quote(args)
     search_url = "https://escapefromtarkov.gamepedia.com/Special:Search?search=" + query
     r = requests.get(search_url)
     results = bs(r.text, "html.parser")
-    try:
+    if len(r.history) > 0 and r.history[0].is_redirect:
+        page = results
+    else:
         result = results.find("a", class_="unified-search__result__title").get("href")
         r = requests.get(result)
         page = bs(r.text, "html.parser")
-    except AttributeError:
-        page = results
+
     title = page.find("h1").get_text()
     if "Search results for" in title:
         await ctx.send(f"Unable to find {args}, try being more specific.")
         return
     embed = discord.Embed(title=title, url=r.url)
-    # ! Add crafting as well
     if page.find(id="Quests"):
         quests = page.find(id="Quests").find_parent("h2").find_next_sibling("ul").find_all("li")
         quests_string = ""
         for quest in quests:
-            # TODO: Formatting (bold "in raid"), hyperlink to quest wiki page, make it a list maybe?
             quest_name = quest.find("a").get_text()
             quest_url = "https://escapefromtarkov.gamepedia.com" + quest.find("a").get("href")
             text = quest.get_text()
@@ -186,7 +187,6 @@ async def quest(ctx, *, args: str):
             text = text.replace(quest_name, f"[{quest_name}]({quest_url})")
             quests_string += text + "\n"
         embed.add_field(name="Quests", value=quests_string, inline=False)
-    # TODO: Hideout uses, trading (barters), crafting
     if page.find(id="Hideout"):
         uses = page.find(id="Hideout").find_parent("h2").find_next_sibling("ul").find_all("li")
         uses_string = ""
@@ -203,16 +203,35 @@ async def quest(ctx, *, args: str):
             barter_out = th[4].get_text().strip()
             trades_string += f"**{trader}:** {barter_in} -> {barter_out} \n"
         embed.add_field(name="Trading", value=trades_string, inline=False)
-    try:
-        # ! Some items doesn't get detected due to not showing icon (knives)
+    if page.find(id="Crafting"):
+        crafts = page.find(id="Crafting").find_parent("h2").find_next_sibling("table").find_all("tr")
+        crafts_string = ""
+        for craft in crafts:
+            th = craft.find_all("th")
+            crafter = th[2].get_text().strip()
+            craft_in = th[0].get_text().strip()
+            craft_out = th[4].get_text().strip()
+            crafts_string += f"**{crafter}:** {craft_in} -> {craft_out} \n"
+        embed.add_field(name="Crafting", value=crafts_string, inline=False)
+    icon = None
+    if page.find("td", class_="va-infobox-icon"):
         icon = page.find("td", class_="va-infobox-icon").find("img").get("src")
-    except AttributeError:
+    else:
         # TODO: Make it so that it retries until it finds an item
-        await ctx.send(f'Found "{title}" ({r.url}), but it doesn\'t seem to be an item. Try to be more specific.')
-        return
+        if page.find("td", class_="va-infobox-mainimage-image"):
+            icon = page.find("td", class_="va-infobox-mainimage-image").find("img").get("src")
+        embed.set_footer(text="This might not be an item")
 
-    embed.set_thumbnail(url=icon)
+    # TODO: Fix embed being too big (larger than 1024)
+    if icon is not None:
+        embed.set_thumbnail(url=icon)
     await ctx.send(embed=embed)
+
+
+@quest.error
+async def quest_error(ctx, error):
+    await ctx.message.add_reaction(no)
+    await ctx.send("Unknown error when processing command. ||<@140586848819871744>||")
 
 
 @bot.command(aliases=["mv"])
