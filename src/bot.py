@@ -18,7 +18,6 @@ import traceback
 import io
 from datetime import datetime
 
-# TODO: Make a tarkov wiki search for item uses (trading/hideout/quests)
 
 token = os.environ["BOT_TOKEN"]
 ownerid = os.environ["OWNER_ID"]
