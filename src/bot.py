@@ -89,6 +89,8 @@ async def on_command_error(ctx, error):
         logging.error(f'"{error}" in {ctx.guild.name}: {ctx.channel.name}')
         owner = bot.get_user(int(ownerid))
         trace = traceback.format_exc()
+        if "NoneType: None" in trace:
+            trace = str(error)
         if len(trace) < 2000:
             await owner.send(f"**Guild:** {ctx.guild.name} **Channel:** {ctx.channel.name} **Time:** {datetime.now().strftime('%d/%m/%Y %H:%M:%S')}\n```\n{trace}\n```")
         else:
@@ -115,6 +117,7 @@ async def ping(ctx):
 
 @bot.command(aliases=["jasså"])
 async def jassa(ctx, args):
+    # TODO: Use Pillow instead of moviepy here to decrease time it takes to generate
     await ctx.message.add_reaction(ok)
     start_time = time.time()
     async with ctx.channel.typing():
@@ -165,9 +168,6 @@ async def jassa_error(ctx, error):
 @bot.command(aliases=["q"])
 async def quest(ctx, *, args: str):
     await ctx.message.add_reaction(ok)
-    # Get quests, trades and hideout importance
-    # Get images and display it in an embed
-    # query = args.replace(" ", "+")
     query = quote(args)
     search_url = "https://escapefromtarkov.gamepedia.com/Special:Search?search=" + query
     r = requests.get(search_url)
@@ -201,25 +201,39 @@ async def quest(ctx, *, args: str):
         for use in uses:
             uses_string += use.get_text() + "\n"
         embed.add_field(name="Hideout", value=uses_string, inline=False)
+    # TODO: Fix formatting for Trading and Crafting embed
+    #       Fix weird formatting for multiple items (both with x amount and + another item)
+    #       Formatting for additional notes (ex. "After completing his task ...")
     if page.find(id="Trading"):
         trades = page.find(id="Trading").find_parent("h2").find_next_sibling("table").find_all("tr")
         trades_string = ""
+        previous_level = ""
         for trade in trades:
             th = trade.find_all("th")
-            trader = th[2].get_text().strip()
+            trader_info = th[2].get_text().strip().split()
+            trader = trader_info[0]
+            trader_level = trader_info[1]
             barter_in = th[0].get_text().strip()
             barter_out = th[4].get_text().strip()
-            trades_string += f"**{trader}:** {barter_in} -> {barter_out} \n"
+            if trader_level != previous_level:
+                trades_string += f"**{trader} {trader_level}:**\n"
+            previous_level = trader_level
+            trades_string += f"{barter_in} -> {barter_out}\n"
         embed.add_field(name="Trading", value=trades_string, inline=False)
     if page.find(id="Crafting"):
         crafts = page.find(id="Crafting").find_parent("h2").find_next_sibling("table").find_all("tr")
         crafts_string = ""
+        previous_station = ""
         for craft in crafts:
             th = craft.find_all("th")
-            crafter = th[2].get_text().strip()
+            station = th[2].find("big").get_text()
+            time = th[2].get_text().strip().replace(station, "")
             craft_in = th[0].get_text().strip()
             craft_out = th[4].get_text().strip()
-            crafts_string += f"**{crafter}:** {craft_in} -> {craft_out} \n"
+            if station != previous_station:
+                crafts_string += f"**{station}:**\n"
+            previous_station = station
+            crafts_string += f"{time}: {craft_in} -> {craft_out}\n"
         embed.add_field(name="Crafting", value=crafts_string, inline=False)
     icon = None
     if page.find("td", class_="va-infobox-icon"):
