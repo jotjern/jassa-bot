@@ -178,6 +178,10 @@ async def quest(ctx, *, args: str):
         page = bs(r.text, "html.parser")
     else:
         page = results
+    if page.find("table", class_="plainlinks ambox ambox-green"):
+        result = "https://escapefromtarkov.gamepedia.com" + page.find("div", class_="mw-parser-output").find("a").get("href")
+        r = requests.get(result)
+        page = bs(r.text, "html.parser")
     title = page.find("h1").get_text()
     if "Search results for" in title:
         await ctx.send(f"Unable to find {discord.utils.escape_markdown(args)}, try being more specific.")
