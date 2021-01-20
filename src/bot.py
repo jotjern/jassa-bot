@@ -191,12 +191,13 @@ async def quest(ctx, *, args: str):
         quests = page.find(id="Quests").find_parent("h2").find_next_sibling("ul").find_all("li")
         quests_string = ""
         for quest in quests:
-            quest_name = quest.find("a").get_text()
-            quest_url = "https://escapefromtarkov.gamepedia.com" + quest.find("a").get("href")
             text = quest.get_text()
+            for href in quest.find_all("a"):
+                quest_name = href.get_text()
+                quest_url = "https://escapefromtarkov.gamepedia.com" + href.get("href")
+                text = text.replace(quest_name, f"[{quest_name}]({quest_url})")
             if "in raid" in text:
                 text = text.replace("in raid", "**in raid**")
-            text = text.replace(quest_name, f"[{quest_name}]({quest_url})")
             quests_string += text + "\n"
         embed.add_field(name="Quests", value=quests_string, inline=False)
     if page.find(id="Hideout"):
