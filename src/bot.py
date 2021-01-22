@@ -85,17 +85,18 @@ async def on_command(ctx):
 @bot.event
 async def on_command_error(ctx, error):
     await ctx.message.remove_reaction(ok, bot.user)
-    if not isinstance(error, commands.CommandNotFound):
-        logging.error(f'"{error}" in {ctx.guild.name}: {ctx.channel.name}')
-        owner = bot.get_user(int(ownerid))
-        trace = traceback.format_exc()
-        if "NoneType: None" in trace:
-            trace = str(error)
-        if len(trace) < 2000:
-            await owner.send(f"**Guild:** {ctx.guild.name} **Channel:** {ctx.channel.name} **Time:** {datetime.now().strftime('%d/%m/%Y %H:%M:%S')}\n```\n{trace}\n```")
-        else:
-            await owner.send(f"Errored in {ctx.guild.name}, {ctx.channel.name} at {datetime.now().strftime('%d/%m/%Y %H:%M:%S')}")
-            await owner.send(file=discord.File(io.StringIO(trace), filename="traceback.txt"))
+    # TODO: Fix this sending all errors
+    # if not isinstance(error, commands.CommandNotFound):
+    #     logging.error(f'"{error}" in {ctx.guild.name}: {ctx.channel.name}')
+    #     owner = bot.get_user(int(ownerid))
+    #     trace = traceback.format_exc()
+    #     if "NoneType: None" in trace:
+    #         trace = str(error)
+    #     if len(trace) < 2000:
+    #         await owner.send(f"**Guild:** {ctx.guild.name} **Channel:** {ctx.channel.name} **Time:** {datetime.now().strftime('%d/%m/%Y %H:%M:%S')}\n```\n{trace}\n```")
+    #     else:
+    #         await owner.send(f"Errored in {ctx.guild.name}, {ctx.channel.name} at {datetime.now().strftime('%d/%m/%Y %H:%M:%S')}")
+    #         await owner.send(file=discord.File(io.StringIO(trace), filename="traceback.txt"))
     if isinstance(error, commands.NSFWChannelRequired):
         await ctx.message.add_reaction(nsfw)
         # Only send meme response in the right discord server
@@ -258,7 +259,10 @@ async def quest(ctx, *, args: str):
 @quest.error
 async def quest_error(ctx, error):
     await ctx.message.add_reaction(no)
-    await ctx.send("Unknown error when processing command. ||<@140586848819871744>||")
+    if isinstance(error, commands.MissingRequiredArgument):
+        await ctx.send("Missing search query. Usage: `+quest <query>`")
+    else:
+        await ctx.send("Unknown error when processing command. ||<@140586848819871744>||")
 
 
 @bot.command(aliases=["mv"])
