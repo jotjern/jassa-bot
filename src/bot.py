@@ -266,7 +266,6 @@ async def quest(ctx, *, args: str):
             icon = page.find("td", class_="va-infobox-mainimage-image").find("img").get("src")
         embed.set_footer(text="This might not be an item")
 
-    # TODO: Fix embed being too big (larger than 1024)
     if icon is not None:
         embed.set_thumbnail(url=icon)
     await ctx.send(embed=embed)
@@ -396,6 +395,7 @@ async def r34(ctx, *, tags):
     else:
         logging.info(f"Rule34: Searching for {tags}")
         await ctx.message.add_reaction(ok)
+        # TODO: Swap to use getImages instead
         xml_url = rule34.URLGen(tags + "+-cub -loli -underage -shotacon -shota")
         logging.info(f"Got API url for {tags}: {xml_url}")
         xml = bs(requests.get(xml_url).text, "lxml")
