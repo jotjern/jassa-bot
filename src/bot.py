@@ -85,18 +85,17 @@ async def on_command(ctx):
 @bot.event
 async def on_command_error(ctx, error):
     await ctx.message.remove_reaction(ok, bot.user)
-    # TODO: Fix this sending all errors
-    # if not isinstance(error, commands.CommandNotFound):
-    #     logging.error(f'"{error}" in {ctx.guild.name}: {ctx.channel.name}')
-    #     owner = bot.get_user(int(ownerid))
-    #     trace = traceback.format_exc()
-    #     if "NoneType: None" in trace:
-    #         trace = str(error)
-    #     if len(trace) < 2000:
-    #         await owner.send(f"**Guild:** {ctx.guild.name} **Channel:** {ctx.channel.name} **Time:** {datetime.now().strftime('%d/%m/%Y %H:%M:%S')}\n```\n{trace}\n```")
-    #     else:
-    #         await owner.send(f"Errored in {ctx.guild.name}, {ctx.channel.name} at {datetime.now().strftime('%d/%m/%Y %H:%M:%S')}")
-    #         await owner.send(file=discord.File(io.StringIO(trace), filename="traceback.txt"))
+    if not isinstance(error, commands.CommandNotFound):
+        logging.error(f'"{error}" in {ctx.guild.name}: {ctx.channel.name}')
+        owner = bot.get_user(int(ownerid))
+        trace = traceback.format_exc()
+        if "NoneType: None" in trace:
+            trace = str(error)
+        if len(trace) < 2000:
+            await owner.send(f"**Guild:** {ctx.guild.name} **Channel:** {ctx.channel.name} **Time:** {datetime.now().strftime('%d/%m/%Y %H:%M:%S')}\n```\n{trace}\n```")
+        else:
+            await owner.send(f"Errored in {ctx.guild.name}, {ctx.channel.name} at {datetime.now().strftime('%d/%m/%Y %H:%M:%S')}")
+            await owner.send(file=discord.File(io.StringIO(trace), filename="traceback.txt"))
     if isinstance(error, commands.NSFWChannelRequired):
         await ctx.message.add_reaction(nsfw)
         # Only send meme response in the right discord server
@@ -200,13 +199,21 @@ async def quest(ctx, *, args: str):
             if "in raid" in text:
                 text = text.replace("in raid", "**in raid**")
             quests_string += text + "\n"
-        embed.add_field(name="Quests", value=quests_string, inline=False)
+        if len(quests_string) > 1024:
+            embed.add_field(name="Quests", value=f"Too many quests to show, see more [here]({r.url + '#Quests'})", inline=False)
+        else:
+            embed.add_field(name="Quests", value=quests_string, inline=False)
+
     if page.find(id="Hideout"):
         uses = page.find(id="Hideout").find_parent("h2").find_next_sibling("ul").find_all("li")
         uses_string = ""
         for use in uses:
             uses_string += use.get_text() + "\n"
-        embed.add_field(name="Hideout", value=uses_string, inline=False)
+        if len(uses_string) > 1024:
+            embed.add_field(name="Hideout", value=f"Too many hideout uses to show, see more [here]({r.url + '#Hideout'})", inline=False)
+        else:
+            embed.add_field(name="Hideout", value=uses_string, inline=False)
+
     # TODO: Fix formatting for Trading and Crafting embed
     #       Fix weird formatting for multiple items (both with x amount and + another item)
     #       Formatting for additional notes (ex. "After completing his task ...")
@@ -225,7 +232,11 @@ async def quest(ctx, *, args: str):
                 trades_string += f"**{trader} {trader_level}:**\n"
             previous_level = trader_level
             trades_string += f"{barter_in} -> {barter_out}\n"
-        embed.add_field(name="Trading", value=trades_string, inline=False)
+        if len(trades_string) > 1024:
+            embed.add_field(name="Trading", value=f"Too many trades to show, see more [here]({r.url + '#Trading'})", inline=False)
+        else:
+            embed.add_field(name="Trading", value=trades_string, inline=False)
+
     if page.find(id="Crafting"):
         crafts = page.find(id="Crafting").find_parent("h2").find_next_sibling("table").find_all("tr")
         crafts_string = ""
@@ -240,8 +251,13 @@ async def quest(ctx, *, args: str):
                 crafts_string += f"**{station}:**\n"
             previous_station = station
             crafts_string += f"{time}: {craft_in} -> {craft_out}\n"
-        embed.add_field(name="Crafting", value=crafts_string, inline=False)
+        if len(crafts_string) > 1024:
+            embed.add_field(name="Crafting", value=f"Too many crafts to show, see more [here]({r.url + '#Crafting'})", inline=False)
+        else:
+            embed.add_field(name="Crafting", value=crafts_string, inline=False)
     icon = None
+
+    # Check for icon
     if page.find("td", class_="va-infobox-icon"):
         icon = page.find("td", class_="va-infobox-icon").find("img").get("src")
     else:
