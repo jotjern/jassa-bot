@@ -194,7 +194,12 @@ async def quest(ctx, *, args: str):
 
     if tarkov_market:
         api = requests.get('https://tarkov-market.com/api/v1/item?q=' + title, headers={'x-api-key': tarkov_key})
-        tarkov_item = api.json()[0]
+        try:
+            tarkov_item = api.json()[0]
+        except IndexError:
+            # If no results are found, state so
+            embed.add_field(name="Price", value=f"No results found for {title}")
+            return
         name = tarkov_item["name"]
         price = format(tarkov_item["price"], ",")
         avg24h = format(tarkov_item["avg24hPrice"], ",")
