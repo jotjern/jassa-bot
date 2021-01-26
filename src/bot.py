@@ -228,10 +228,14 @@ async def quest(ctx, *, args: str):
             embed.add_field(name="Quests", value=quests_string, inline=False)
 
     if page.find(id="Hideout"):
-        uses = page.find(id="Hideout").find_parent("h2").find_next_sibling("ul").find_all("li")
+        uses_element = page.find(id="Hideout").find_parent("h2").find_next_sibling()
         uses_string = ""
-        for use in uses:
-            uses_string += use.get_text() + "\n"
+        if uses_element.name == "p":
+            uses_string = uses_element.text
+        else:
+            uses = uses_element.find_all("li")
+            for use in uses:
+                uses_string += use.get_text() + "\n"
         if len(uses_string) > 1024:
             embed.add_field(name="Hideout", value=f"Too many hideout uses to show, see more [here]({r.url + '#Hideout'})", inline=False)
         else:
