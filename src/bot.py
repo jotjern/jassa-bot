@@ -53,6 +53,7 @@ if tarkov_key is not None:
     tarkov_market = True
     logging.info("Tarkov API enabled. (from https://tarkov-market.com)")
 else:
+    tarkov_market = False
     logging.warning("No tarkov-market API key found, price of items won't be available")
 
 # Check for linux and folders
