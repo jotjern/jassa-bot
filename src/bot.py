@@ -195,11 +195,10 @@ async def quest(ctx, *, args: str):
     if tarkov_market:
         api = requests.get('https://tarkov-market.com/api/v1/item?q=' + title, headers={'x-api-key': tarkov_key})
         tarkov_item = api.json()[0]
-
         name = tarkov_item["name"]
         price = format(tarkov_item["price"], ",")
         avg24h = format(tarkov_item["avg24hPrice"], ",")
-        per_slot = tarkov_item["price"] / tarkov_item["slots"]
+        per_slot = format(int(tarkov_item["price"] / tarkov_item["slots"]), ",")
         trader_name = tarkov_item["traderName"]
         trader_price = format(tarkov_item["traderPrice"], ",")
 
