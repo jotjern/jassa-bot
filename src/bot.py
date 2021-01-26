@@ -21,6 +21,7 @@ from datetime import datetime
 
 token = os.environ["BOT_TOKEN"]
 ownerid = os.environ["OWNER_ID"]
+tarkov_key = os.getenv("TARKOV_API")
 
 logger = logging.getLogger("discord")
 logger.setLevel(logging.CRITICAL)
@@ -48,11 +49,15 @@ ok = "✅"
 no = "❌"
 nsfw = "🔞"
 
+if tarkov_key is not None:
+    tarkov_market = True
+    logging.info("Tarkov API enabled. (from https://tarkov-market.com)")
+else:
+    logging.warning("No tarkov-market API key found, price of items won't be available")
+
 # Check for linux and folders
 if sys.platform != "linux":
-    logging.warning(
-        "Bot is not made for non Linux installations. Persistence may not work"
-    )
+    logging.warning("Bot is not made for non Linux installations. Persistence may not work")
 try:
     if os.path.isdir("/jassa-bot/output/optimized"):
         logging.info("All files are correct :). Persistence is enabled")
@@ -66,9 +71,7 @@ try:
         os.chmod("/jassa-bot/aliases.json", stat.S_IRWXO)
 except PermissionError as e:
     logging.warning(e)
-    logging.warning(
-        "Permission denied for /jassa-bot directory. Persistence will not work!"
-    )
+    logging.warning("Permission denied for /jassa-bot directory. Persistence will not work!")
 
 
 @bot.event
@@ -187,6 +190,26 @@ async def quest(ctx, *, args: str):
         await ctx.send(f"Unable to find {discord.utils.escape_markdown(args)}, try being more specific.")
         return
     embed = discord.Embed(title=title, url=r.url)
+
+    if tarkov_market:
+        api = requests.get('https://tarkov-market.com/api/v1/item?q=' + title, headers={'x-api-key': tarkov_key})
+        tarkov_item = api.json()[0]
+
+        name = tarkov_item["name"]
+        price = format(tarkov_item["price"], ",")
+        avg24h = format(tarkov_item["avg24hPrice"], ",")
+        per_slot = tarkov_item["price"] / tarkov_item["slots"]
+        trader_name = tarkov_item["traderName"]
+        trader_price = format(tarkov_item["traderPrice"], ",")
+
+        # Check if wiki and API name is same, if not display API name to avoid wrong price
+        if name == title:
+            name_string = "Price"
+        else:
+            name_string = f"Price ({name})"
+
+        embed.add_field(name=name_string, value=f"**Current:** {price} ₽\n**Per slot:** {per_slot} ₽\n**24h average:** {avg24h} ₽\n**{trader_name}:** {trader_price} ₽")
+
     if page.find(id="Quests"):
         quests = page.find(id="Quests").find_parent("h2").find_next_sibling("ul").find_all("li")
         quests_string = ""
