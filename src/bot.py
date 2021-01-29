@@ -22,6 +22,7 @@ from datetime import datetime
 token = os.environ["BOT_TOKEN"]
 ownerid = os.environ["OWNER_ID"]
 tarkov_key = os.getenv("TARKOV_API")
+env = os.getenv("ERROR_DM")
 
 logger = logging.getLogger("discord")
 logger.setLevel(logging.CRITICAL)
@@ -91,15 +92,16 @@ async def on_command_error(ctx, error):
     await ctx.message.remove_reaction(ok, bot.user)
     if not isinstance(error, commands.CommandNotFound):
         logging.error(f'"{error}" in {ctx.guild.name}: {ctx.channel.name}')
-        owner = bot.get_user(int(ownerid))
-        trace = traceback.format_exc()
-        if "NoneType: None" in trace:
-            trace = str(error)
-        if len(trace) < 2000:
-            await owner.send(f"**Guild:** {ctx.guild.name} **Channel:** {ctx.channel.name} **Time:** {datetime.now().strftime('%d/%m/%Y %H:%M:%S')}\n```\n{trace}\n```")
-        else:
-            await owner.send(f"Errored in {ctx.guild.name}, {ctx.channel.name} at {datetime.now().strftime('%d/%m/%Y %H:%M:%S')}")
-            await owner.send(file=discord.File(io.StringIO(trace), filename="traceback.txt"))
+        if env is None:
+            owner = bot.get_user(int(ownerid))
+            trace = traceback.format_exc()
+            if "NoneType: None" in trace:
+                trace = str(error)
+            if len(trace) < 2000:
+                await owner.send(f"**Guild:** {ctx.guild.name} **Channel:** {ctx.channel.name} **Time:** {datetime.now().strftime('%d/%m/%Y %H:%M:%S')}\n```\n{trace}\n```")
+            else:
+                await owner.send(f"Errored in {ctx.guild.name}, {ctx.channel.name} at {datetime.now().strftime('%d/%m/%Y %H:%M:%S')}")
+                await owner.send(file=discord.File(io.StringIO(trace), filename="traceback.txt"))
     if isinstance(error, commands.NSFWChannelRequired):
         await ctx.message.add_reaction(nsfw)
         # Only send meme response in the right discord server
