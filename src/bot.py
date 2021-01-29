@@ -314,6 +314,21 @@ async def quest_error(ctx, error):
         await ctx.send("Unknown error when processing command. ||<@140586848819871744>||")
 
 
+@bot.command()
+@commands.has_guild_permissions(administrator=True)
+async def vcmute(ctx):
+    # This command has only been tested with the Vexera Muted role
+    await ctx.message.add_reaction(ok)
+    muted_role = discord.utils.get(ctx.guild.roles, name="Muted")
+    if muted_role is None:
+        return await ctx.send("The role `Muted` does not exist. Has it been renamed?")
+    channels = ctx.guild.voice_channels
+    perm = not channels[0].overwrites_for(muted_role).speak
+    for channel in channels:
+        await channel.set_permissions(muted_role, speak=perm)
+    await ctx.send(f"Set Speak permission for the Muted role to {perm} in {len(channels)} voice channels")
+
+
 @bot.command(aliases=["mv"])
 @commands.has_guild_permissions(move_members=True)
 async def moveall(ctx, *, channel: str):
