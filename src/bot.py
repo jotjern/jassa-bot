@@ -17,12 +17,21 @@ from urllib.parse import quote
 import traceback
 import io
 from datetime import datetime
+from distutils.util import strtobool
 
 
 token = os.environ["BOT_TOKEN"]
 ownerid = os.environ["OWNER_ID"]
 tarkov_key = os.getenv("TARKOV_API")
-env = os.getenv("ERROR_DM")
+if os.getenv("ERROR_DM") is not None:
+    dm = bool(strtobool(os.getenv("ERROR_DM")))
+else:
+    dm = True
+if os.getenv("PREFIX") is None:
+    prefix = "+"
+else:
+    prefix = os.getenv("PREFIX")
+
 
 logger = logging.getLogger("discord")
 logger.setLevel(logging.CRITICAL)
@@ -43,7 +52,7 @@ rule34 = rule34.Sync()
 intents = discord.Intents().default()
 intents.members = True
 
-bot = commands.Bot(command_prefix="+", owner_id=ownerid, intents=intents)
+bot = commands.Bot(command_prefix=prefix, owner_id=ownerid, intents=intents)
 
 # Emojis :)
 ok = "✅"
@@ -90,18 +99,6 @@ async def on_command(ctx):
 @bot.event
 async def on_command_error(ctx, error):
     await ctx.message.remove_reaction(ok, bot.user)
-    if not isinstance(error, commands.CommandNotFound):
-        logging.error(f'"{error}" in {ctx.guild.name}: {ctx.channel.name}')
-        if env is None:
-            owner = bot.get_user(int(ownerid))
-            trace = traceback.format_exc()
-            if "NoneType: None" in trace:
-                trace = str(error)
-            if len(trace) < 2000:
-                await owner.send(f"**Guild:** {ctx.guild.name} **Channel:** {ctx.channel.name} **Time:** {datetime.now().strftime('%d/%m/%Y %H:%M:%S')}\n```\n{trace}\n```")
-            else:
-                await owner.send(f"Errored in {ctx.guild.name}, {ctx.channel.name} at {datetime.now().strftime('%d/%m/%Y %H:%M:%S')}")
-                await owner.send(file=discord.File(io.StringIO(trace), filename="traceback.txt"))
     if isinstance(error, commands.NSFWChannelRequired):
         await ctx.message.add_reaction(nsfw)
         # Only send meme response in the right discord server
@@ -112,6 +109,23 @@ async def on_command_error(ctx, error):
     if isinstance(error, commands.NotOwner):
         await ctx.message.add_reaction(no)
         await ctx.send("You have to be the bot owner to use this command")
+    if not isinstance(error, commands.CommandNotFound):
+        logging.error(f'"{error}" in {ctx.guild.name}: {ctx.channel.name}')
+        # Only error if not already handled
+        matches = [no, nsfw]
+        for reaction in ctx.message.reactions:
+            if any(x in reaction.emoji for x in matches):
+                return
+        if dm is True:
+            owner = bot.get_user(int(ownerid))
+            trace = traceback.format_exc()
+            if "NoneType: None" in trace:
+                trace = str(error)
+            if len(trace) < 2000:
+                await owner.send(f"**Guild:** {ctx.guild.name} **Channel:** {ctx.channel.name} **Time:** {datetime.now().strftime('%d/%m/%Y %H:%M:%S')}\n```\n{trace}\n```")
+            else:
+                await owner.send(f"Errored in {ctx.guild.name}, {ctx.channel.name} at {datetime.now().strftime('%d/%m/%Y %H:%M:%S')}")
+                await owner.send(file=discord.File(io.StringIO(trace), filename="traceback.txt"))
 
 
 @bot.command(aliases=["pog"])
