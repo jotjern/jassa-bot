@@ -59,6 +59,8 @@ ok = "✅"
 no = "❌"
 nsfw = "🔞"
 
+# TODO: Add a "shut yo bitch ass up" gif mute suicide (mute previous person in chat, and yourself for 1 minute)
+
 if tarkov_key is not None:
     tarkov_market = True
     logging.info("Tarkov API enabled. (from https://tarkov-market.com)")
