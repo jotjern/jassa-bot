@@ -56,7 +56,6 @@
                 "sha256:fbd3b5e18d34683decc00d9a360179ac1e7a320a5fee10ab8053ffd6deab76e0",
                 "sha256:feb24ff1226beeb056e247cf2e24bba5232519efb5645121c4aea5b6ad74c1f2"
             ],
-            "index": "pypi",
             "version": "==3.7.4"
         },
         "async-timeout": {
@@ -338,11 +337,11 @@
         },
         "rule34": {
             "hashes": [
-                "sha256:b2b3b8bd840c9ba25cc6686764f9a69dbdfe5e70a3e9a8c11922f7b63b213717",
-                "sha256:fbcda13fb32fddd2574bf39a5212427d1baf473643c927f8b058a023a5c28f7e"
+                "sha256:f076f07fbb8b6761e9c1cacfb0b3d22d829e78e3b3e849bf82c112e5a34cfc88",
+                "sha256:fce733a2c7659912cc3a62eb59cd33b9c03a31104a891733926d38b6d52dbdab"
             ],
             "index": "pypi",
-            "version": "==1.8.0"
+            "version": "==1.8.1"
         },
         "soupsieve": {
             "hashes": [

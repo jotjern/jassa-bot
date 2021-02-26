@@ -21,7 +21,7 @@ numpy==1.20.1
 pillow==8.1.0
 proglog==0.1.9
 requests==2.25.1
-rule34==1.8.0
+rule34==1.8.1
 soupsieve==2.2 ; python_version >= '3.0'
 tqdm==4.58.0
 typing-extensions==3.7.4.3
