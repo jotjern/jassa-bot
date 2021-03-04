@@ -60,7 +60,6 @@ ok = "✅"
 no = "❌"
 nsfw = "🔞"
 
-# TODO: Add a "shut yo bitch ass up" gif mute suicide (mute previous person in chat, and yourself for 1 minute)
 
 if tarkov_key is not None:
     tarkov_market = True
@@ -476,7 +475,6 @@ async def roleleaderboard(ctx, arg: str = None):
 
 @roleleaderboard.error
 async def lb_error(ctx, error):
-    # TODO: Figure out how to catch a Python error via .error instead of using try/catch
     await ctx.message.add_reaction(no)
 
 
