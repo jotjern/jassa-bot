@@ -5,7 +5,7 @@ on:
     # Publish `master` as Docker `latest` image
     # and `dev` as Docker `dev` image.
     branches:
-      - master
+      - main
       - dev
 
     # Publish `v1.2.3` tags as releases.
@@ -84,7 +84,7 @@ jobs:
           [[ "${{ github.ref }}" == "refs/tags/"* ]] && VERSION=$(echo $VERSION | sed -e 's/^v//')
 
           # Use Docker `latest` tag convention
-          [ "$VERSION" == "master" ] && VERSION=latest
+          [ "$VERSION" == "main" ] && VERSION=latest
           [ "$VERSION" == "dev"] && VERSION=dev
 
           echo IMAGE_ID=$IMAGE_ID
