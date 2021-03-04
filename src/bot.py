@@ -60,6 +60,7 @@ ok = "✅"
 no = "❌"
 nsfw = "🔞"
 
+# TODO: Add a task that selects a random user to change server icon
 
 if tarkov_key is not None:
     tarkov_market = True
@@ -207,6 +208,7 @@ async def shutup(ctx):
         return await ctx.send("The role `Muted` does not exist. Has it been renamed?")
     channels = ctx.guild.voice_channels
     for channel in channels:
+        # ? If user calling command is in a vc with the other, also do vc mute
         await channel.set_permissions(muted_role, speak=True)
     await ctx.send("https://tenor.com/view/meryl-streep-shut-up-yell-gif-15386483")
     await ctx.message.author.add_roles(muted_role)
