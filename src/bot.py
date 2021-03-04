@@ -18,6 +18,7 @@ import traceback
 import io
 from datetime import datetime
 from distutils.util import strtobool
+import asyncio
 
 
 token = os.environ["BOT_TOKEN"]
@@ -111,6 +112,9 @@ async def on_command_error(ctx, error):
     if isinstance(error, commands.NotOwner):
         await ctx.message.add_reaction(no)
         await ctx.send("You have to be the bot owner to use this command")
+    if isinstance(error, commands.NoPrivateMessage):
+        await ctx.message.add_reaction(no)
+        await ctx.send("This command is only available in a guild")
     if not isinstance(error, commands.CommandNotFound):
         logging.error(f'"{error}" in {ctx.guild.name}: {ctx.channel.name}')
         # Only error if not already handled
@@ -139,7 +143,7 @@ async def ping(ctx):
 
 @bot.command(aliases=["jasså"])
 async def jassa(ctx, args):
-    # TODO: Use Pillow instead of moviepy here to decrease time it takes to generate
+    # TODO: Use ffmpeg instead of moviepy here to decrease time it takes to generate
     await ctx.message.add_reaction(ok)
     start_time = time.time()
     async with ctx.channel.typing():
@@ -185,6 +189,32 @@ async def jassa_error(ctx, error):
     if isinstance(error, commands.MissingRequiredArgument):
         await ctx.message.add_reaction(no)
         await ctx.send("Mangler navn (eller noe annet).\nRiktig bruk: `+jasså <navn>`")
+
+
+@bot.command(aliases=["shut", "shutyobitchassup", "shutyobitchass", "sybap"])
+@commands.guild_only()
+async def shutup(ctx):
+    await ctx.message.add_reaction(ok)
+    try:
+        mention = ctx.message.mentions[0]
+    except IndexError:
+        # Get author from previous message if no one is mentioned
+        history = await ctx.channel.history(limit=2).flatten()
+        mention = history[1].author
+    if mention.bot:
+        return await ctx.send("Won't mute a bot ;)")
+    muted_role = discord.utils.get(ctx.guild.roles, name="Muted")
+    if muted_role is None:
+        return await ctx.send("The role `Muted` does not exist. Has it been renamed?")
+    channels = ctx.guild.voice_channels
+    for channel in channels:
+        await channel.set_permissions(muted_role, speak=True)
+    await ctx.send("https://tenor.com/view/meryl-streep-shut-up-yell-gif-15386483")
+    await ctx.message.author.add_roles(muted_role)
+    await mention.add_roles(muted_role)
+    await asyncio.sleep(60)
+    await ctx.message.author.remove_roles(muted_role)
+    await mention.remove_roles(muted_role)
 
 
 @bot.command(aliases=["q"])
@@ -407,7 +437,7 @@ async def alias_error(ctx, error):
         await ctx.send("Unable to find channel")
 
 
-@bot.command(aliases=["lb", "rolelb"])
+@bot.command(aliases=["lb", "rolelb", "leaderboard"])
 async def roleleaderboard(ctx, arg: str = None):
     try:
         await ctx.message.add_reaction(ok)
