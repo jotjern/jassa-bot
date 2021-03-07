@@ -210,9 +210,9 @@ async def shutup(ctx):
     for channel in channels:
         # ? If user calling command is in a vc with the other, also do vc mute
         await channel.set_permissions(muted_role, speak=True)
-    await ctx.send("https://tenor.com/view/meryl-streep-shut-up-yell-gif-15386483")
     await ctx.message.author.add_roles(muted_role)
     await mention.add_roles(muted_role)
+    await ctx.send("https://tenor.com/view/meryl-streep-shut-up-yell-gif-15386483")
     await asyncio.sleep(60)
     await ctx.message.author.remove_roles(muted_role)
     await mention.remove_roles(muted_role)
