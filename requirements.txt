@@ -14,7 +14,7 @@ humanfriendly==9.1
 idna==2.10
 imageio-ffmpeg==0.4.3
 imageio==2.9.0
-lxml==4.6.2
+lxml==4.6.3
 moviepy==1.0.3
 multidict==5.1.0
 numpy==1.20.1
