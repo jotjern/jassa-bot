@@ -201,10 +201,22 @@ async def shutup(ctx):
         # Get author from previous message if no one is mentioned
         history = await ctx.channel.history(limit=2).flatten()
         mention = history[1].author
+    if ctx.message.role_mentions:
+        await ctx.message.remove_reaction(ok, bot.user)
+        await ctx.message.add_reaction(no)
+        return await ctx.send("You mentioned a role. Please mention a user.")
+    if mention == ctx.message.author:
+        await ctx.message.remove_reaction(ok, bot.user)
+        await ctx.message.add_reaction(no)
+        return await ctx.send("Unable to find a user to mute (mention them)")
     if mention.bot:
+        await ctx.message.remove_reaction(ok, bot.user)
+        await ctx.message.add_reaction(no)
         return await ctx.send("Won't mute a bot ;)")
     muted_role = discord.utils.get(ctx.guild.roles, name="Muted")
     if muted_role is None:
+        await ctx.message.remove_reaction(ok, bot.user)
+        await ctx.message.add_reaction(no)
         return await ctx.send("The role `Muted` does not exist. Has it been renamed?")
     channels = ctx.guild.voice_channels
     for channel in channels:
