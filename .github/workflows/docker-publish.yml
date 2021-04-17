@@ -41,7 +41,7 @@ jobs:
 
     steps:
       - uses: actions/checkout@v2
-        
+
       - uses: satackey/action-docker-layer-caching@v0.0.11
         continue-on-error: true
 
@@ -60,12 +60,12 @@ jobs:
 
     steps:
       - uses: actions/checkout@v2
-        
+
       - uses: satackey/action-docker-layer-caching@v0.0.11
         continue-on-error: true
 
       - name: Build image
-        run: docker build . --file Dockerfile --tag jassa-bot
+        run: docker build . --file Dockerfile --tag jassa-bot --progress=plain
 
       - name: Log into Dockerhub
         run: echo "${{ secrets.DOCKERHUB_PASSWORD }}" | docker login -u jorgen1040 --password-stdin

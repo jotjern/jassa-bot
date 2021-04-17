@@ -1,25 +1,25 @@
-from moviepy.editor import VideoFileClip, TextClip, CompositeVideoClip
-import os
-import logging
-import coloredlogs
-import discord
-from discord.ext import commands
+import asyncio
 import hashlib
-import rule34
-import requests
-from bs4 import BeautifulSoup as bs
-import random
-import time
-import sys
-import json
-import stat
-from urllib.parse import quote
-import traceback
 import io
+import json
+import logging
+import os
+import random
+import stat
+import sys
+import time
+import traceback
 from datetime import datetime
 from distutils.util import strtobool
-import asyncio
+from urllib.parse import quote
 
+import coloredlogs
+import discord
+import ffmpeg
+import requests
+import rule34
+from bs4 import BeautifulSoup as bs
+from discord.ext import commands
 
 token = os.environ["BOT_TOKEN"]
 ownerid = os.environ["OWNER_ID"]
@@ -102,6 +102,7 @@ async def on_command(ctx):
 @bot.event
 async def on_command_error(ctx, error):
     await ctx.message.remove_reaction(ok, bot.user)
+    error = getattr(error, 'original', error)
     if isinstance(error, commands.NSFWChannelRequired):
         await ctx.message.add_reaction(nsfw)
         # Only send meme response in the right discord server
@@ -109,13 +110,13 @@ async def on_command_error(ctx, error):
             await ctx.send("IKKE I GENERAL DA! KUN I <#607395883239342080>")
         else:
             await ctx.send("This command is only available in channels marked NSFW")
-    if isinstance(error, commands.NotOwner):
+    elif isinstance(error, commands.NotOwner):
         await ctx.message.add_reaction(no)
         await ctx.send("You have to be the bot owner to use this command")
-    if isinstance(error, commands.NoPrivateMessage):
+    elif isinstance(error, commands.NoPrivateMessage):
         await ctx.message.add_reaction(no)
         await ctx.send("This command is only available in a guild")
-    if not isinstance(error, commands.CommandNotFound):
+    elif not isinstance(error, commands.CommandNotFound):
         logging.error(f'"{error}" in {ctx.guild.name}: {ctx.channel.name}')
         # Only error if not already handled
         matches = [no, nsfw]
@@ -132,6 +133,7 @@ async def on_command_error(ctx, error):
             else:
                 await owner.send(f"Errored in {ctx.guild.name}, {ctx.channel.name} at {datetime.now().strftime('%d/%m/%Y %H:%M:%S')}")
                 await owner.send(file=discord.File(io.StringIO(trace), filename="traceback.txt"))
+        traceback.print_exception(type(error), error, error.__traceback__)
 
 
 @bot.command(aliases=["pog"])
@@ -143,9 +145,7 @@ async def ping(ctx):
 
 @bot.command(aliases=["jasså"])
 async def jassa(ctx, args):
-    # TODO: Use ffmpeg instead of moviepy here to decrease time it takes to generate
     await ctx.message.add_reaction(ok)
-    start_time = time.time()
     async with ctx.channel.typing():
         name = hashlib.md5(args.encode()).hexdigest()
         filename = "/jassa-bot/output/" + name + ".mp4"
@@ -155,33 +155,34 @@ async def jassa(ctx, args):
             logging.info("Gif exists, sending file")
             await ctx.send(file=discord.File(optimized))
         else:
+            start_time = time.time()
             logging.info("Making new gif")
-            video = VideoFileClip(os.path.abspath("media/jassa_template.mp4")).subclip(
-                0, 3
+            # Generate mp4 with text
+            (
+                ffmpeg
+                .input('media/template.mp4')
+                .drawtext(fontfile="ProximaNova-Semibold.otf", text=args, x=160, y=660, fontsize=32.5, fontcolor="white", enable="between(t,0.5,5)")
+                .filter('fps', fps=19, round='up')
+                .filter('scale', "400", "trunc(ow/a/2)*2", flags="lanczos")
+                .output(filename)
+                .run()
             )
-
-            txt_clip = (
-                TextClip(
-                    args, fontsize=33, color="white", font="ProximaNova-Semibold.otf"
+            # Convert mp4 to gif
+            (
+                ffmpeg
+                .filter([
+                    ffmpeg.input(filename),
+                    ffmpeg.input("media/palette.png")
+                ],
+                    filter_name="paletteuse",
+                    dither="bayer"
                 )
-                .set_position((160, 655))
-                .set_duration(3)
+                .output(optimized)
+                .run()
             )
-
-            result = CompositeVideoClip([video, txt_clip])
-            result.write_videofile(filename)
-            # New better ffmpeg options
-            os.system(
-                "ffmpeg -y -i "
-                + filename
-                + " -i media/palette.png -lavfi 'fps=19,scale=480:-1:flags=lanczos,paletteuse=dither=bayer:bayer_scale=5:diff_mode=rectangle' "
-                + optimized
-            )
+            logging.info(f"Successfully generated gif with {args} in {time.time()-start_time} seconds")
 
             await ctx.send(file=discord.File(optimized))
-
-        stop_time = time.time()
-        logging.info(f"Successfully generated gif with {args} in {stop_time-start_time} seconds")
 
 
 @jassa.error
