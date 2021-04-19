@@ -1,4 +1,4 @@
-FROM jrottenberg/ffmpeg:4.1-scratch312 AS ffmpeg
+FROM jrottenberg/ffmpeg:4.4-scratch312 AS ffmpeg
 FROM python:3-alpine
 
 VOLUME /jassa-bot
