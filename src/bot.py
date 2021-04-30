@@ -117,6 +117,8 @@ async def on_command_error(ctx, error):
         await ctx.message.add_reaction(no)
         await ctx.send("This command is only available in a guild")
     elif not isinstance(error, commands.CommandNotFound):
+        await ctx.message.add_reaction(no)
+        await ctx.send("Unknown error")
         logging.error(f'"{error}" in {ctx.guild.name}: {ctx.channel.name}')
         # Only error if not already handled
         matches = [no, nsfw]
@@ -125,7 +127,7 @@ async def on_command_error(ctx, error):
                 return
         if dm is True:
             owner = bot.get_user(int(ownerid))
-            trace = traceback.format_exc()
+            trace = traceback.print_exception(type(error), error, error.__traceback__, file=sys.stderr)
             if "NoneType: None" in trace:
                 trace = str(error)
             if len(trace) < 2000:
@@ -161,11 +163,11 @@ async def jassa(ctx, args):
             (
                 ffmpeg
                 .input('media/template.mp4')
-                .drawtext(fontfile="ProximaNova-Semibold.otf", text=args, x=160, y=660, fontsize=32.5, fontcolor="white", enable="between(t,0.5,5)")
+                .drawtext(fontfile="ProximaNova-Semibold.otf", text=args, x=160, y=656, fontsize=32.5, fontcolor="white", enable="between(t,0.5,5)")
                 .filter('fps', fps=19, round='up')
                 .filter('scale', "400", "trunc(ow/a/2)*2", flags="lanczos")
                 .output(filename)
-                .run()
+                .run(quiet=True)
             )
             # Convert mp4 to gif
             (
@@ -178,7 +180,7 @@ async def jassa(ctx, args):
                     dither="bayer"
                 )
                 .output(optimized)
-                .run()
+                .run(quiet=True)
             )
             logging.info(f"Successfully generated gif with {args} in {time.time()-start_time} seconds")
 
@@ -219,6 +221,8 @@ async def shutup(ctx):
         await ctx.message.remove_reaction(ok, bot.user)
         await ctx.message.add_reaction(no)
         return await ctx.send("The role `Muted` does not exist. Has it been renamed?")
+    # Make sure users don't accidentally get muted in VCs
+    # TODO: Optimize this
     channels = ctx.guild.voice_channels
     for channel in channels:
         # ? If user calling command is in a vc with the other, also do vc mute
