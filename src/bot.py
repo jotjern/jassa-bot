@@ -160,28 +160,39 @@ async def jassa(ctx, args):
             start_time = time.time()
             logging.info("Making new gif")
             # Generate mp4 with text
-            (
-                ffmpeg
-                .input('media/template.mp4')
-                .drawtext(fontfile="ProximaNova-Semibold.otf", text=args, x=160, y=656, fontsize=32.5, fontcolor="white", enable="between(t,0.5,5)")
-                .filter('fps', fps=19, round='up')
-                .filter('scale', "400", "trunc(ow/a/2)*2", flags="lanczos")
-                .output(filename)
-                .run(quiet=True)
-            )
-            # Convert mp4 to gif
-            (
-                ffmpeg
-                .filter([
-                    ffmpeg.input(filename),
-                    ffmpeg.input("media/palette.png")
-                ],
-                    filter_name="paletteuse",
-                    dither="bayer"
+            try:
+                (
+                    ffmpeg
+                    .input('media/template.mp4')
+                    .drawtext(fontfile="ProximaNova-Semibold.otf", text=args, x=160, y=656, fontsize=32.5, fontcolor="white", enable="between(t,0.5,5)")
+                    .filter('fps', fps=19)
+                    .filter('scale', "400", "trunc(ow/a/2)*2", flags="lanczos")
+                    .output(filename)
+                    .run(quiet=True)
                 )
-                .output(optimized)
-                .run(quiet=True)
-            )
+            except ffmpeg.Error as e:
+                print('stdout:', e.stdout.decode('utf8'))
+                print('stderr:', e.stderr.decode('utf8'))
+                raise e
+            # Convert mp4 to gif
+            logging.info("Converting mp4 to gif")
+            try:
+                (
+                    ffmpeg
+                    .filter([
+                        ffmpeg.input(filename),
+                        ffmpeg.input("media/palette.png")
+                    ],
+                        filter_name="paletteuse",
+                        dither="bayer"
+                    )
+                    .output(optimized)
+                    .run(quiet=True)
+                )
+            except ffmpeg.Error as e:
+                print('stdout:', e.stdout.decode('utf8'))
+                print('stderr:', e.stderr.decode('utf8'))
+                raise e
             logging.info(f"Successfully generated gif with {args} in {time.time()-start_time} seconds")
 
             await ctx.send(file=discord.File(optimized))
