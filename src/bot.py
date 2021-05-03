@@ -90,7 +90,7 @@ except PermissionError as e:
 
 @bot.event
 async def on_ready():
-    await bot.change_presence(activity=discord.Game("+jasså"))
+    await bot.change_presence(activity=discord.Game(prefix + "jasså"))
     logging.info(f"Logged in as {bot.user}")
 
 
@@ -127,7 +127,7 @@ async def on_command_error(ctx, error):
                 return
         if dm is True:
             owner = bot.get_user(int(ownerid))
-            trace = traceback.print_exception(type(error), error, error.__traceback__, file=sys.stderr)
+            trace = traceback.format_exception(type(error), error, error.__traceback__, file=sys.stderr)
             if "NoneType: None" in trace:
                 trace = str(error)
             if len(trace) < 2000:
@@ -186,12 +186,13 @@ async def jassa(ctx, args):
                         filter_name="paletteuse",
                         dither="bayer"
                     )
+                    .filter("fps", fps=19, round="up")
                     .output(optimized)
                     .run(quiet=True)
                 )
             except ffmpeg.Error as e:
-                print('stdout:', e.stdout.decode('utf8'))
-                print('stderr:', e.stderr.decode('utf8'))
+                print("stdout:", e.stdout.decode("utf8"))
+                print("stderr:", e.stderr.decode("utf8"))
                 raise e
             logging.info(f"Successfully generated gif with {args} in {time.time()-start_time} seconds")
 
