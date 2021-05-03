@@ -15,6 +15,7 @@ requests = "*"
 [dev-packages]
 pre-commit = "*"
 black = "==20.8b1"
+flake8-quotes = "*"
 
 [requires]
 python_version = "3"
