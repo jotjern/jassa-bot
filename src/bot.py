@@ -22,17 +22,13 @@ from bs4 import BeautifulSoup as bs
 from discord.ext import commands
 
 token = os.environ["BOT_TOKEN"]
-ownerid = os.environ["OWNER_ID"]
+ownerid = int(os.environ["OWNER_ID"])
 tarkov_key = os.getenv("TARKOV_API")
 if os.getenv("ERROR_DM") is not None:
     dm = bool(strtobool(os.getenv("ERROR_DM")))
 else:
     dm = True
-if os.getenv("PREFIX") is None:
-    prefix = "+"
-else:
-    prefix = os.getenv("PREFIX")
-
+prefix = os.getenv("PREFIX", "+")
 
 logger = logging.getLogger("discord")
 logger.setLevel(logging.CRITICAL)
@@ -117,7 +113,6 @@ async def on_command_error(ctx, error):
         await ctx.message.add_reaction(no)
         await ctx.send("This command is only available in a guild")
     elif not isinstance(error, commands.CommandNotFound):
-        await ctx.message.add_reaction(no)
         await ctx.send("Unknown error")
         logging.error(f'"{error}" in {ctx.guild.name}: {ctx.channel.name}')
         # Only error if not already handled
@@ -125,6 +120,7 @@ async def on_command_error(ctx, error):
         for reaction in ctx.message.reactions:
             if any(x in reaction.emoji for x in matches):
                 return
+        await ctx.message.add_reaction(no)
         if dm is True:
             owner = bot.get_user(int(ownerid))
             trace = traceback.format_exception(type(error), error, error.__traceback__, file=sys.stderr)
