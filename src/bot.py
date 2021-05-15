@@ -113,14 +113,14 @@ async def on_command_error(ctx, error):
         await ctx.message.add_reaction(no)
         await ctx.send("This command is only available in a guild")
     elif not isinstance(error, commands.CommandNotFound):
-        await ctx.send("Unknown error")
-        logging.error(f'"{error}" in {ctx.guild.name}: {ctx.channel.name}')
         # Only error if not already handled
         matches = [no, nsfw]
         for reaction in ctx.message.reactions:
             if any(x in reaction.emoji for x in matches):
                 return
         await ctx.message.add_reaction(no)
+        await ctx.send("Unknown error")
+        logging.error(f'"{error}" in {ctx.guild.name}: {ctx.channel.name}')
         if dm is True:
             owner = bot.get_user(int(ownerid))
             trace = traceback.format_exception(type(error), error, error.__traceback__, file=sys.stderr)
@@ -379,11 +379,9 @@ async def quest(ctx, *, args: str):
 
 @quest.error
 async def quest_error(ctx, error):
-    await ctx.message.add_reaction(no)
     if isinstance(error, commands.MissingRequiredArgument):
+        await ctx.message.add_reaction(no)
         await ctx.send("Missing search query. Usage: `+quest <query>`")
-    else:
-        await ctx.send("Unknown error when processing command. ||<@140586848819871744>||")
 
 
 @bot.command()
@@ -422,12 +420,14 @@ async def moveall(ctx, *, channel: str):
 
 @moveall.error
 async def moveall_error(ctx, error):
-    await ctx.message.add_reaction(no)
     if isinstance(error, commands.MissingRequiredArgument):
+        await ctx.message.add_reaction(no)
         await ctx.send("Missing voice channel ID/name to move to. Usage: `+moveall <vc id/name>`")
     if isinstance(error, commands.ChannelNotFound):
+        await ctx.message.add_reaction(no)
         await ctx.send("Unable to find channel")
     if isinstance(error, commands.MissingPermissions):
+        await ctx.message.add_reaction(no)
         await ctx.send("You don't have the required permissions for this command (Move Members)")
 
 
@@ -458,10 +458,11 @@ async def alias(ctx, alias: str, channel: discord.VoiceChannel = None):
 
 @alias.error
 async def alias_error(ctx, error):
-    await ctx.message.add_reaction(no)
     if isinstance(error, commands.MissingRequiredArgument):
+        await ctx.message.add_reaction(no)
         await ctx.send("Missing alias and/or channel ID. Usage: `+alias <alias> <channel ID/name in quotes>`")
     if isinstance(error, commands.ChannelNotFound):
+        await ctx.message.add_reaction(no)
         await ctx.send("Unable to find channel")
 
 
@@ -500,11 +501,6 @@ async def roleleaderboard(ctx, arg: str = None):
         await ctx.message.add_reaction(no)
         await ctx.message.remove_reaction(ok, bot.user)
         await ctx.send("Command only accepts either numbers or `full` as arguments")
-
-
-@roleleaderboard.error
-async def lb_error(ctx, error):
-    await ctx.message.add_reaction(no)
 
 
 @bot.command(aliases=["rule34"])
