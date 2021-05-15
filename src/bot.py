@@ -404,7 +404,6 @@ async def vcmute(ctx):
 @bot.command(aliases=["mv"])
 @commands.has_guild_permissions(move_members=True)
 async def moveall(ctx, *, channel: str):
-    await ctx.message.add_reaction(ok)
     with open("/jassa-bot/aliases.json", "r") as f:
         aliases = json.load(f)
     try:
@@ -412,10 +411,13 @@ async def moveall(ctx, *, channel: str):
         channel = bot.get_channel(int(channel))
     except KeyError:
         channel = discord.utils.find(lambda x: x.name == channel, ctx.guild.voice_channels)
-
+    if channel is None:
+        await ctx.message.add_reaction(no)
+        return await ctx.send("Unable to find channel")
     for member in ctx.message.author.voice.channel.members:
         await member.move_to(channel)
         logging.info(f"Moved {member} to {channel} in {ctx.guild}")
+    await ctx.message.add_reaction(ok)
 
 
 @moveall.error
