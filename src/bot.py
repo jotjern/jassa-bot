@@ -57,6 +57,7 @@ no = "❌"
 nsfw = "🔞"
 
 # TODO: Add a task that selects a random user to change server icon
+# TODO: Add custom setnick command that only works on others
 
 if tarkov_key is not None:
     tarkov_market = True
