@@ -57,7 +57,9 @@ no = "❌"
 nsfw = "🔞"
 
 # TODO: Add a task that selects a random user to change server icon
-# TODO: Add custom setnick command that only works on others
+# TODO: Add pin command (custom pin channel, that works over the 50 cap)
+
+# TODO: Swap all mentions of + in a command to the prefix variable
 
 if tarkov_key is not None:
     tarkov_market = True
@@ -87,7 +89,7 @@ except PermissionError as e:
 
 @bot.event
 async def on_ready():
-    await bot.change_presence(activity=discord.Game(prefix + "jasså"))
+    await bot.change_presence(activity=discord.Game(f"{prefix}jasså"))
     logging.info(f"Logged in as {bot.user}")
 
 
@@ -200,48 +202,73 @@ async def jassa(ctx, args):
 async def jassa_error(ctx, error):
     if isinstance(error, commands.MissingRequiredArgument):
         await ctx.message.add_reaction(no)
-        await ctx.send("Mangler navn (eller noe annet).\nRiktig bruk: `+jasså <navn>`")
+        await ctx.send(f"Mangler navn (eller noe annet).\nRiktig bruk: `{prefix}jasså <navn>`")
+
+
+@bot.command()
+@commands.guild_only()
+@commands.bot_has_guild_permissions(manage_nicknames=True)
+async def setnick(ctx, member: discord.Member, *, nickname: str = None):
+    if member == ctx.author and ctx.author.guild_permissions.manage_nicknames is False:
+        await ctx.message.add_reaction(no)
+        return await ctx.send("You can't change your own nickname")
+    if member == ctx.guild.owner:
+        await ctx.message.add_reaction(no)
+        return await ctx.send("You can't change the server owner's name. (Discord doesn't allow it)")
+    await member.edit(nick=nickname)
+    await ctx.message.add_reaction(ok)
+
+
+@setnick.error
+async def setnick_error(ctx, error):
+    if isinstance(error, commands.MemberNotFound):
+        await ctx.message.add_reaction(no)
+        await ctx.send("Unable to find that member")
+    if isinstance(error, commands.MissingRequiredArgument):
+        await ctx.message.add_reaction(no)
+        await ctx.send(f"Missing required argument.\nUsage: `{prefix}setnick <Username/Mention> <Optional: nickname>`")
 
 
 @bot.command(aliases=["shut", "shutyobitchassup", "shutyobitchass", "sybap"])
 @commands.guild_only()
 async def shutup(ctx):
     await ctx.message.add_reaction(ok)
-    try:
-        mention = ctx.message.mentions[0]
-    except IndexError:
-        # Get author from previous message if no one is mentioned
-        history = await ctx.channel.history(limit=2).flatten()
-        mention = history[1].author
-    if ctx.message.role_mentions:
-        await ctx.message.remove_reaction(ok, bot.user)
-        await ctx.message.add_reaction(no)
-        return await ctx.send("You mentioned a role. Please mention a user.")
-    if mention == ctx.message.author:
-        await ctx.message.remove_reaction(ok, bot.user)
-        await ctx.message.add_reaction(no)
-        return await ctx.send("Unable to find a user to mute (mention them)")
-    if mention.bot:
-        await ctx.message.remove_reaction(ok, bot.user)
-        await ctx.message.add_reaction(no)
-        return await ctx.send("Won't mute a bot ;)")
-    muted_role = discord.utils.get(ctx.guild.roles, name="Muted")
-    if muted_role is None:
-        await ctx.message.remove_reaction(ok, bot.user)
-        await ctx.message.add_reaction(no)
-        return await ctx.send("The role `Muted` does not exist. Has it been renamed?")
-    # Make sure users don't accidentally get muted in VCs
-    # TODO: Optimize this
-    channels = ctx.guild.voice_channels
-    for channel in channels:
-        # ? If user calling command is in a vc with the other, also do vc mute
-        await channel.set_permissions(muted_role, speak=True)
-    await ctx.message.author.add_roles(muted_role)
-    await mention.add_roles(muted_role)
-    await ctx.send("https://tenor.com/view/meryl-streep-shut-up-yell-gif-15386483")
-    await asyncio.sleep(60)
-    await ctx.message.author.remove_roles(muted_role)
-    await mention.remove_roles(muted_role)
+    async with ctx.channel.typing():
+        try:
+            mention = ctx.message.mentions[0]
+        except IndexError:
+            # Get author from previous message if no one is mentioned
+            history = await ctx.channel.history(limit=2).flatten()
+            mention = history[1].author
+        if ctx.message.role_mentions:
+            await ctx.message.remove_reaction(ok, bot.user)
+            await ctx.message.add_reaction(no)
+            return await ctx.send("You mentioned a role. Please mention a user.")
+        if mention == ctx.message.author:
+            await ctx.message.remove_reaction(ok, bot.user)
+            await ctx.message.add_reaction(no)
+            return await ctx.send("Unable to find a user to mute (mention them)")
+        if mention.bot:
+            await ctx.message.remove_reaction(ok, bot.user)
+            await ctx.message.add_reaction(no)
+            return await ctx.send("Won't mute a bot ;)")
+        muted_role = discord.utils.get(ctx.guild.roles, name="Muted")
+        if muted_role is None:
+            await ctx.message.remove_reaction(ok, bot.user)
+            await ctx.message.add_reaction(no)
+            return await ctx.send("The role `Muted` does not exist. Has it been renamed?")
+        # Make sure users don't accidentally get muted in VCs
+        # TODO: Optimize this
+        channels = ctx.guild.voice_channels
+        for channel in channels:
+            # ? If user calling command is in a vc with the other, also do vc mute
+            await channel.set_permissions(muted_role, speak=True)
+        await ctx.message.author.add_roles(muted_role)
+        await mention.add_roles(muted_role)
+        await ctx.send("https://tenor.com/view/meryl-streep-shut-up-yell-gif-15386483")
+        await asyncio.sleep(60)
+        await ctx.message.author.remove_roles(muted_role)
+        await mention.remove_roles(muted_role)
 
 
 @bot.command(aliases=["q"])
@@ -382,7 +409,7 @@ async def quest(ctx, *, args: str):
 async def quest_error(ctx, error):
     if isinstance(error, commands.MissingRequiredArgument):
         await ctx.message.add_reaction(no)
-        await ctx.send("Missing search query. Usage: `+quest <query>`")
+        await ctx.send(f"Missing search query. Usage: `{prefix}quest <query>`")
 
 
 @bot.command()
@@ -423,7 +450,7 @@ async def moveall(ctx, *, channel: str):
 async def moveall_error(ctx, error):
     if isinstance(error, commands.MissingRequiredArgument):
         await ctx.message.add_reaction(no)
-        await ctx.send("Missing voice channel ID/name to move to. Usage: `+moveall <vc id/name>`")
+        await ctx.send(f"Missing voice channel ID/name to move to. Usage: `{prefix}moveall <vc id/name>`")
     if isinstance(error, commands.ChannelNotFound):
         await ctx.message.add_reaction(no)
         await ctx.send("Unable to find channel")
@@ -461,7 +488,7 @@ async def alias(ctx, alias: str, channel: discord.VoiceChannel = None):
 async def alias_error(ctx, error):
     if isinstance(error, commands.MissingRequiredArgument):
         await ctx.message.add_reaction(no)
-        await ctx.send("Missing alias and/or channel ID. Usage: `+alias <alias> <channel ID/name in quotes>`")
+        await ctx.send(f"Missing alias and/or channel ID. Usage: `{prefix}alias <alias> <channel ID/name in quotes>`")
     if isinstance(error, commands.ChannelNotFound):
         await ctx.message.add_reaction(no)
         await ctx.send("Unable to find channel")
@@ -540,7 +567,7 @@ async def r34(ctx, *, tags):
 async def r34_error(ctx, error):
     if isinstance(error, commands.MissingRequiredArgument):
         await ctx.message.add_reaction(no)
-        await ctx.send("Missing tags to search for.\nUsage: `+r34/rule34 <tags>` or for multiple tags `+r34/rule34 <tag1> <tag2> ...`")
+        await ctx.send(f"Missing tags to search for.\nUsage: `{prefix}r34/rule34 <tags>` or for multiple tags `{prefix}r34/rule34 <tag1> <tag2> ...`")
 
 
 @bot.command()
