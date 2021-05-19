@@ -266,9 +266,9 @@ async def shutup(ctx):
         await ctx.message.author.add_roles(muted_role)
         await mention.add_roles(muted_role)
         await ctx.send("https://tenor.com/view/meryl-streep-shut-up-yell-gif-15386483")
-        await asyncio.sleep(60)
-        await ctx.message.author.remove_roles(muted_role)
-        await mention.remove_roles(muted_role)
+    await asyncio.sleep(60)
+    await ctx.message.author.remove_roles(muted_role)
+    await mention.remove_roles(muted_role)
 
 
 @bot.command(aliases=["q"])
