@@ -209,6 +209,10 @@ async def jassa_error(ctx, error):
 @commands.guild_only()
 @commands.bot_has_guild_permissions(manage_nicknames=True)
 async def setnick(ctx, member: discord.Member, *, nickname: str = None):
+    # TODO: Add the option to set a nickname log channel and display new and old nickname, as well as the one who changed it
+    if nickname is not None and len(nickname) > 32:
+        await ctx.message.add_reaction(no)
+        return await ctx.send("Nickname can't be longer than 32 characters")
     if member == ctx.author and ctx.author.guild_permissions.manage_nicknames is False:
         await ctx.message.add_reaction(no)
         return await ctx.send("You can't change your own nickname")
