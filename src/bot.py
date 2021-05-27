@@ -75,11 +75,17 @@ try:
     else:
         os.makedirs("/jassa-bot/output/optimized")
         logger.info("Made output folders, persistence is now enabled")
+    # TODO: Merge servers.json and aliases.json
     if not os.path.isfile("/jassa-bot/aliases.json"):
         logger.info("Missing aliases.json, making file")
-        with open("/jassa-bot/aliases.json", "a") as f:
+        with open("/jassa-bot/aliases.json", "x") as f:
             f.write("{}")
         os.chmod("/jassa-bot/aliases.json", stat.S_IRWXO)
+    if not os.path.isfile("/jassa-bot/servers.json"):
+        logger.info("Missing servers.json, making file")
+        with open("/jassa-bot/servers.json", "x") as f:
+            f.write("{}")
+        os.chmod("/jassa-bot/servers.json", stat.S_IRWXO)
 except PermissionError as e:
     logger.warning(e)
     logger.warning("Permission denied for /jassa-bot directory. Persistence will not work!")
@@ -208,6 +214,7 @@ async def jassa_error(ctx, error):
 @commands.bot_has_guild_permissions(manage_nicknames=True)
 async def setnick(ctx, member: discord.Member, *, nickname: str = None):
     # TODO: Add the option to set a nickname log channel and display new and old nickname, as well as the one who changed it
+    old_nick = member.display_name
     if nickname is not None and len(nickname) > 32:
         await ctx.message.add_reaction(no)
         return await ctx.send("Nickname can't be longer than 32 characters")
@@ -224,6 +231,26 @@ async def setnick(ctx, member: discord.Member, *, nickname: str = None):
         return await ctx.send("Missing permissions to change that user's nickname")
     await ctx.message.add_reaction(ok)
 
+    # Send to log
+    with open("/jassa-bot/servers.json") as f:
+        servers = json.load(f)
+    try:
+        log_id = servers[str(ctx.guild.id)]["nickname_log_channel"]
+        log_channel = bot.get_channel(log_id)
+    except KeyError:
+        # If no log channel is set, just return
+        return
+    # Generate embed
+    embed = discord.Embed(
+        description=f"**{ctx.author.mention} changed nickname of {member.mention}**",
+        timestamp=datetime.utcnow(),
+        color=0x00e1ff
+    )
+    embed.set_author(name=str(ctx.author), icon_url=ctx.author.avatar_url)
+    embed.add_field(name="Before", value=old_nick, inline=False)
+    embed.add_field(name="After", value=nickname, inline=False)
+    await log_channel.send(embed=embed)
+
 
 @setnick.error
 async def setnick_error(ctx, error):
@@ -233,6 +260,27 @@ async def setnick_error(ctx, error):
     if isinstance(error, commands.MissingRequiredArgument):
         await ctx.message.add_reaction(no)
         await ctx.send(f"Missing required argument.\nUsage: `{prefix}setnick <Username/Mention> <Optional: nickname>`")
+
+
+@bot.command()
+@commands.guild_only()
+@commands.has_guild_permissions(manage_guild=True)
+async def setnicklog(ctx, channel: discord.TextChannel):
+    if channel.guild != ctx.guild:
+        await ctx.send("Cannot set log channel outside of server")
+        return await ctx.message.add_reaction(no)
+    with open("/jassa-bot/servers.json", "r") as f:
+        servers = json.load(f)
+    try:
+        servers[str(ctx.guild.id)]
+    except KeyError:
+        print("Guild ID not already in servers.json, adding it")
+        servers[str(ctx.guild.id)] = {}
+    servers[str(ctx.guild.id)]["nickname_log_channel"] = channel.id
+    with open("/jassa-bot/servers.json", "w") as f:
+        json.dump(servers, f, indent=4)
+    await channel.send(f"Successfully set this as the log channel for the `{prefix}setnick` command")
+    await ctx.message.add_reaction(ok)
 
 
 @bot.command(aliases=["shut", "shutyobitchassup", "shutyobitchass", "sybap"])
