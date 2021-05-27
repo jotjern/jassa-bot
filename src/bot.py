@@ -119,6 +119,12 @@ async def on_command_error(ctx, error):
     elif isinstance(error, commands.NoPrivateMessage):
         await ctx.message.add_reaction(no)
         await ctx.send("This command is only available in a guild")
+    elif isinstance(error, commands.MissingPermissions):
+        await ctx.message.add_reaction(no)
+        if len(error.missing_perms) > 1:
+            await ctx.send(f"You are missing the following permissions for this command: `{'`, `'.join(error.missing_perms)}`")
+        else:
+            await ctx.send(f"You need the `{error.missing_perms[0]}` permission to use this command")
     elif not isinstance(error, commands.CommandNotFound):
         # Only error if not already handled
         matches = [no, nsfw]
@@ -213,7 +219,6 @@ async def jassa_error(ctx, error):
 @commands.guild_only()
 @commands.bot_has_guild_permissions(manage_nicknames=True)
 async def setnick(ctx, member: discord.Member, *, nickname: str = None):
-    # TODO: Add the option to set a nickname log channel and display new and old nickname, as well as the one who changed it
     old_nick = member.display_name
     if nickname is not None and len(nickname) > 32:
         await ctx.message.add_reaction(no)
@@ -281,6 +286,13 @@ async def setnicklog(ctx, channel: discord.TextChannel):
         json.dump(servers, f, indent=4)
     await channel.send(f"Successfully set this as the log channel for the `{prefix}setnick` command")
     await ctx.message.add_reaction(ok)
+
+
+@setnicklog.error
+async def setnicklog_error(ctx, error):
+    if isinstance(error, commands.ChannelNotFound):
+        await ctx.send("Unable to find channel. Please be more specific or use an ID or mention it with #")
+        await ctx.message.add_reaction(no)
 
 
 @bot.command(aliases=["shut", "shutyobitchassup", "shutyobitchass", "sybap"])
@@ -508,9 +520,6 @@ async def moveall_error(ctx, error):
     if isinstance(error, commands.ChannelNotFound):
         await ctx.message.add_reaction(no)
         await ctx.send("Unable to find channel")
-    if isinstance(error, commands.MissingPermissions):
-        await ctx.message.add_reaction(no)
-        await ctx.send("You don't have the required permissions for this command (Move Members)")
 
 
 @bot.command(aliases=["mvalias", "movealias"])
