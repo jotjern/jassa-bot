@@ -217,7 +217,11 @@ async def setnick(ctx, member: discord.Member, *, nickname: str = None):
     if member == ctx.guild.owner:
         await ctx.message.add_reaction(no)
         return await ctx.send("You can't change the server owner's name. (Discord doesn't allow it)")
-    await member.edit(nick=nickname)
+    try:
+        await member.edit(nick=nickname)
+    except discord.Forbidden:
+        await ctx.message.add_reaction(no)
+        return await ctx.send("Missing permissions to change that user's nickname")
     await ctx.message.add_reaction(ok)
 
 
