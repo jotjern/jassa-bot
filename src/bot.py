@@ -13,7 +13,7 @@ from datetime import datetime
 from distutils.util import strtobool
 from urllib.parse import quote
 
-import coloredlogs
+import colorlog
 import discord
 import ffmpeg
 import requests
@@ -29,20 +29,19 @@ if os.getenv("ERROR_DM") is not None:
 else:
     dm = True
 prefix = os.getenv("PREFIX", "+")
+logging_level = os.getenv("LOGGING_LEVEL", "INFO")
 
-logger = logging.getLogger("discord")
-logger.setLevel(logging.CRITICAL)
-logging.Formatter()
-logging.basicConfig(
-    format="%(asctime)s [%(levelname)s]: %(message)s",
+# Disable logging from discord.py
+logging.getLogger("discord").setLevel(logging.CRITICAL)
+# Set up colorlog
+handler = logging.StreamHandler()
+handler.setFormatter(colorlog.ColoredFormatter(
+    fmt="%(log_color)s%(asctime)s [%(levelname)s]: %(message)s",
     datefmt="%Y-%m-%d %H:%M:%S",
-    level=logging.INFO,
-)
-coloredlogs.install(
-    level="INFO",
-    fmt="%(asctime)s [%(levelname)s]: %(message)s",
-    datefmt="%Y-%m-%d %H:%M:%S",
-)
+))
+logger = logging.getLogger("bot")
+logger.setLevel(logging_level)
+logger.addHandler(handler)
 
 rule34 = rule34.Sync()
 
@@ -59,43 +58,42 @@ nsfw = "🔞"
 # TODO: Add a task that selects a random user to change server icon
 # TODO: Add pin command (custom pin channel, that works over the 50 cap)
 
-# TODO: Swap all mentions of + in a command to the prefix variable
 
 if tarkov_key is not None:
     tarkov_market = True
-    logging.info("Tarkov API enabled. (from https://tarkov-market.com)")
+    logger.info("Tarkov API enabled. (from https://tarkov-market.com)")
 else:
     tarkov_market = False
-    logging.warning("No tarkov-market API key found, price of items won't be available")
+    logger.warning("No tarkov-market API key found, price of items won't be available")
 
 # Check for linux and folders
 if sys.platform != "linux":
-    logging.warning("Bot is not made for non Linux installations. Persistence may not work")
+    logger.warning("Bot is not made for non Linux installations. Persistence may not work")
 try:
     if os.path.isdir("/jassa-bot/output/optimized"):
-        logging.info("All files are correct :). Persistence is enabled")
+        logger.info("All files are correct :). Persistence is enabled")
     else:
         os.makedirs("/jassa-bot/output/optimized")
-        logging.info("Made output folders, persistence is now enabled")
+        logger.info("Made output folders, persistence is now enabled")
     if not os.path.isfile("/jassa-bot/aliases.json"):
-        logging.info("Missing aliases.json, making file")
+        logger.info("Missing aliases.json, making file")
         with open("/jassa-bot/aliases.json", "a") as f:
             f.write("{}")
         os.chmod("/jassa-bot/aliases.json", stat.S_IRWXO)
 except PermissionError as e:
-    logging.warning(e)
-    logging.warning("Permission denied for /jassa-bot directory. Persistence will not work!")
+    logger.warning(e)
+    logger.warning("Permission denied for /jassa-bot directory. Persistence will not work!")
 
 
 @bot.event
 async def on_ready():
     await bot.change_presence(activity=discord.Game(f"{prefix}jasså"))
-    logging.info(f"Logged in as {bot.user}")
+    logger.info(f"Logged in as {bot.user}")
 
 
 @bot.event
 async def on_command(ctx):
-    logging.info(f"{ctx.message.author} called {ctx.command}")
+    logger.info(f"{ctx.message.author} called {ctx.command}")
 
 
 @bot.event
@@ -123,10 +121,10 @@ async def on_command_error(ctx, error):
                 return
         await ctx.message.add_reaction(no)
         await ctx.send("Unknown error")
-        logging.error(f'"{error}" in {ctx.guild.name}: {ctx.channel.name}')
+        logger.error(f'"{error}" in {ctx.guild.name}: {ctx.channel.name}')
         if dm is True:
             owner = bot.get_user(int(ownerid))
-            trace = traceback.format_exception(type(error), error, error.__traceback__, file=sys.stderr)
+            trace = traceback.format_exception(type(error), error, error.__traceback__)
             if "NoneType: None" in trace:
                 trace = str(error)
             if len(trace) < 2000:
@@ -141,7 +139,7 @@ async def on_command_error(ctx, error):
 async def ping(ctx):
     ping = round(bot.latency * 1000)
     await ctx.send(f"{ping}ms")
-    logging.info(f"{ping}ms")
+    logger.info(f"{ping}ms")
 
 
 @bot.command(aliases=["jasså"])
@@ -153,11 +151,11 @@ async def jassa(ctx, args):
         optimized = "/jassa-bot/output/optimized/" + name + ".gif"
 
         if os.path.isfile(optimized):
-            logging.info("Gif exists, sending file")
+            logger.info("Gif exists, sending file")
             await ctx.send(file=discord.File(optimized))
         else:
             start_time = time.time()
-            logging.info("Making new gif")
+            logger.info("Making new gif")
             # Generate mp4 with text
             try:
                 (
@@ -174,7 +172,7 @@ async def jassa(ctx, args):
                 print('stderr:', e.stderr.decode('utf8'))
                 raise e
             # Convert mp4 to gif
-            logging.info("Converting mp4 to gif")
+            logger.info("Converting mp4 to gif")
             try:
                 (
                     ffmpeg
@@ -193,7 +191,7 @@ async def jassa(ctx, args):
                 print("stdout:", e.stdout.decode("utf8"))
                 print("stderr:", e.stderr.decode("utf8"))
                 raise e
-            logging.info(f"Successfully generated gif with {args} in {time.time()-start_time} seconds")
+            logger.info(f"Successfully generated gif with {args} in {time.time()-start_time} seconds")
 
             await ctx.send(file=discord.File(optimized))
 
@@ -446,7 +444,7 @@ async def moveall(ctx, *, channel: str):
         return await ctx.send("Unable to find channel")
     for member in ctx.message.author.voice.channel.members:
         await member.move_to(channel)
-        logging.info(f"Moved {member} to {channel} in {ctx.guild}")
+        logger.info(f"Moved {member} to {channel} in {ctx.guild}")
     await ctx.message.add_reaction(ok)
 
 
@@ -543,11 +541,11 @@ async def r34(ctx, *, tags):
         await ctx.message.add_reaction(nsfw)
         await ctx.send("NEI TOS")
     else:
-        logging.info(f"Rule34: Searching for {tags}")
+        logger.info(f"Rule34: Searching for {tags}")
         await ctx.message.add_reaction(ok)
         # TODO: Swap to use getImages instead
         xml_url = rule34.URLGen(tags + "+-cub -loli -underage -shotacon -shota")
-        logging.info(f"Got API url for {tags}: {xml_url}")
+        logger.info(f"Got API url for {tags}: {xml_url}")
         xml = bs(requests.get(xml_url).text, "lxml")
         urls = []
         for post in xml.findAll("post"):
@@ -561,9 +559,9 @@ async def r34(ctx, *, tags):
             random_url = random.choice(urls)
             await ctx.send(f"Found {count_text} results, here is one of them")
             await ctx.send(random_url)
-            logging.info(f"Rule34: Sent {random_url} with tag(s): {tags}")
+            logger.info(f"Rule34: Sent {random_url} with tag(s): {tags}")
         else:
-            logging.info(f"Rule34: No posts were found with the tag(s): {tags}")
+            logger.info(f"Rule34: No posts were found with the tag(s): {tags}")
             await ctx.send(f"No posts were found with the tag(s): {tags}")
 
 

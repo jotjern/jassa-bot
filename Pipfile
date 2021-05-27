@@ -8,9 +8,9 @@ name = "pypi"
 rule34 = "*"
 bs4 = "*"
 lxml = "*"
-coloredlogs = "*"
 ffmpeg-python = "*"
 requests = "*"
+colorlog = "*"
 
 [dev-packages]
 pre-commit = "*"
