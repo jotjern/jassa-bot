@@ -249,7 +249,7 @@ async def setnick(ctx, member: discord.Member, *, nickname: str = None):
     embed = discord.Embed(
         description=f"**{ctx.author.mention} changed nickname of {member.mention}**",
         timestamp=datetime.utcnow(),
-        color=0x00e1ff
+        color=discord.Colour.random(seed=member.id)
     )
     embed.set_author(name=str(ctx.author), icon_url=ctx.author.avatar_url)
     embed.add_field(name="Before", value=old_nick, inline=False)
