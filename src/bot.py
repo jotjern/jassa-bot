@@ -20,6 +20,7 @@ import requests
 import rule34
 from bs4 import BeautifulSoup as bs
 from discord.ext import commands
+from discordTogether import DiscordTogether
 
 token = os.environ["BOT_TOKEN"]
 ownerid = int(os.environ["OWNER_ID"])
@@ -49,6 +50,7 @@ intents = discord.Intents().default()
 intents.members = True
 
 bot = commands.Bot(command_prefix=prefix, owner_id=ownerid, intents=intents)
+discord_together = DiscordTogether(bot)
 
 # Emojis :)
 ok = "✅"
@@ -213,6 +215,29 @@ async def jassa_error(ctx, error):
     if isinstance(error, commands.MissingRequiredArgument):
         await ctx.message.add_reaction(no)
         await ctx.send(f"Mangler navn (eller noe annet).\nRiktig bruk: `{prefix}jasså <navn>`")
+
+
+@bot.command(aliases=["activites", "activity"])
+@commands.guild_only()
+async def together(ctx, name: str):
+    try:
+        link = await discord_together.create_link(ctx.author.voice.channel.id, name)
+    except discord.InvalidArgument as e:
+        await ctx.message.add_reaction(no)
+        return await ctx.send(str(e))
+    await ctx.send(f"Click the blue link! (Not the Play button)\n{link}")
+    await ctx.message.add_reaction(ok)
+
+
+@together.error
+async def together_error(ctx, error):
+    if isinstance(error, commands.MissingRequiredArgument):
+        await ctx.message.add_reaction(no)
+        await ctx.send(
+            "Please specify what application you want to use.\n"
+            "Available applications:\n"
+            "`youtube`, `poker`, `betrayal`, `fishing`, `chess`"
+        )
 
 
 @bot.command()
