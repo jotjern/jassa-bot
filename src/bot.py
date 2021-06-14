@@ -220,6 +220,9 @@ async def jassa_error(ctx, error):
 @bot.command(aliases=["activites", "activity"])
 @commands.guild_only()
 async def together(ctx, name: str):
+    if ctx.author.voice is None:
+        await ctx.message.add_reaction(no)
+        return await ctx.send("You have to be in a voice channel.")
     try:
         link = await discord_together.create_link(ctx.author.voice.channel.id, name)
     except discord.InvalidArgument as e:
