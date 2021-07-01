@@ -389,6 +389,7 @@ async def quest(ctx, *, args: str):
         return
     embed = discord.Embed(title=title, url=r.url)
 
+    # Get prices from tarkov-market.com if API key is set
     if tarkov_market:
         api = requests.get('https://tarkov-market.com/api/v1/item?q=' + title, headers={'x-api-key': tarkov_key})
         try:
@@ -403,6 +404,7 @@ async def quest(ctx, *, args: str):
         per_slot = format(int(tarkov_item["price"] / tarkov_item["slots"]), ",")
         trader_name = tarkov_item["traderName"]
         trader_price = format(tarkov_item["traderPrice"], ",")
+        trader_currency = tarkov_item["traderPriceCur"]
 
         # Check if wiki and API name is same, if not display API name to avoid wrong price
         if name == title:
@@ -410,7 +412,7 @@ async def quest(ctx, *, args: str):
         else:
             name_string = f"Price ({name})"
 
-        embed.add_field(name=name_string, value=f"**Current:** {price} ₽\n**Per slot:** {per_slot} ₽\n**24h average:** {avg24h} ₽\n**{trader_name}:** {trader_price} ₽")
+        embed.add_field(name=name_string, value=f"**Current:** {price} ₽\n**Per slot:** {per_slot} ₽\n**24h average:** {avg24h} ₽\n**{trader_name}:** {trader_price} {trader_currency}")
 
     if page.find(id="Quests"):
         quests = page.find(id="Quests").find_parent("h2").find_next_sibling("ul").find_all("li")

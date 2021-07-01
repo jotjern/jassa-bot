@@ -133,3 +133,4 @@ output/
 .vscode/
 launch.json
 docker-compose.yml
+*.rest
