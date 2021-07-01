@@ -507,6 +507,33 @@ async def quest_error(ctx, error):
         await ctx.send(f"Missing search query. Usage: `{prefix}quest <query>`")
 
 
+@bot.command(aliases=["maps"])
+async def map(ctx, *, args: str):
+    async with ctx.channel.typing():
+        query = quote(args)
+        # TODO: Make this do a search for more reliable results
+        url = "https://escapefromtarkov.gamepedia.com/wiki/" + query
+        r = requests.get(url)
+        results = bs(r.text, "html.parser")
+        if results.find(id="Maps"):
+            # Get all maps
+            maps = results.find(id="Maps").find_parent("h2").find_next_siblings("p")
+            await ctx.send(f"Maps found for **{args}** ({url}):")
+            for map_img in maps:
+                if "Interactive Map" in map_img.text:
+                    # Skip the image if its from an Interactive Map
+                    continue
+                if map_img.find("img"):
+                    map_url = map_img.find("img").get("src")
+                    map_url = map_url.split("/")[:8]
+                    hd_url = "/".join(map_url)
+                    await ctx.send(hd_url)
+            await ctx.message.add_reaction(ok)
+        else:
+            await ctx.message.add_reaction(no)
+            await ctx.send(f"Unable to find any maps for **{args}**")
+
+
 @bot.command()
 @commands.has_guild_permissions(administrator=True)
 async def vcmute(ctx):
