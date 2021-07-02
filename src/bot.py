@@ -509,8 +509,8 @@ async def quest_error(ctx, error):
         await ctx.send(f"Missing search query. Usage: `{prefix}quest <query>`")
 
 
-@bot.command(aliases=["maps"])
-async def map(ctx, *, args: str):
+@bot.command(aliases=["map"])
+async def maps(ctx, *, args: str):
     async with ctx.channel.typing():
         query = quote(args)
         # TODO: Make this do a search for more reliable results
