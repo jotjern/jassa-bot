@@ -32,27 +32,28 @@ jobs:
 
   # Run tests.
   # See also https://docs.docker.com/docker-hub/builds/automated-testing/
-  test:
-    # If gitleaks fails stop workflow
-    # TODO: Make it so a push doesn't fail entire workflow
-    #needs: gitleaks
+  # TODO: Add actual testing
+  # test:
+  #   # If gitleaks fails stop workflow
+  #   # TODO: Make it so a push doesn't fail entire workflow
+  #   #needs: gitleaks
 
-    runs-on: ubuntu-latest
+  #   runs-on: ubuntu-latest
 
-    steps:
-      - uses: actions/checkout@v2
+  #   steps:
+  #     - uses: actions/checkout@v2
 
-      - uses: satackey/action-docker-layer-caching@v0.0.11
-        continue-on-error: true
+  #     - uses: satackey/action-docker-layer-caching@v0.0.11
+  #       continue-on-error: true
 
-      - name: Run tests
-        run: docker build . --file Dockerfile
+  #     - name: Run tests
+  #       run: docker build . --file Dockerfile
 
   # Push image to GitHub Packages.
   # See also https://docs.docker.com/docker-hub/builds/
   push:
     # Ensure test job passes before pushing image.
-    needs: test
+    # needs: test
 
     runs-on: ubuntu-latest
     # Don't push docker image on PRs
