@@ -236,10 +236,12 @@ async def together(ctx, name: str):
 async def together_error(ctx, error):
     if isinstance(error, commands.MissingRequiredArgument):
         await ctx.message.add_reaction(no)
+        app_list = []
+        for app in DiscordTogether.default_choices:
+            app_list.append(f"`{app}`")
         await ctx.send(
             "Please specify what application you want to use.\n"
-            "Available applications:\n"
-            "`youtube`, `poker`, `betrayal`, `fishing`, `chess`"
+            "Available applications:\n" + ", ".join(app_list)
         )
 
 
