@@ -20,7 +20,7 @@ import requests
 import rule34
 from bs4 import BeautifulSoup as bs
 from discord.ext import commands
-from discordTogether import DiscordTogether
+from discord_together import DiscordTogether
 
 token = os.environ["BOT_TOKEN"]
 ownerid = int(os.environ["OWNER_ID"])
@@ -50,7 +50,6 @@ intents = discord.Intents().default()
 intents.members = True
 
 bot = commands.Bot(command_prefix=prefix, owner_id=ownerid, intents=intents)
-discord_together = DiscordTogether(bot)
 
 # Emojis :)
 ok = "✅"
@@ -96,6 +95,7 @@ except PermissionError as e:
 @bot.event
 async def on_ready():
     await bot.change_presence(activity=discord.Game(f"{prefix}jasså"))
+    bot.togetherControl = await DiscordTogether(token)
     logger.info(f"Logged in as {bot.user}")
 
 
@@ -224,7 +224,7 @@ async def together(ctx, name: str):
         await ctx.message.add_reaction(no)
         return await ctx.send("You have to be in a voice channel.")
     try:
-        link = await discord_together.create_link(ctx.author.voice.channel.id, name)
+        link = await bot.togetherControl.create_link(ctx.author.voice.channel.id, name)
     except discord.InvalidArgument as e:
         await ctx.message.add_reaction(no)
         return await ctx.send(str(e))
