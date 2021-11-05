@@ -625,6 +625,10 @@ async def roleleaderboard(ctx, arg: str = None):
             limit = 11
         elif arg == "full":
             limit = -999999
+        elif arg == "0":
+            await ctx.message.add_reaction(no)
+            await ctx.message.remove_reaction(ok, bot.user)
+            return await ctx.send("Number must be more than `0`")
         else:
             limit = int(arg) + 1
         members_list = ctx.guild.members
