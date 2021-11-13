@@ -132,11 +132,11 @@
         },
         "discord-together": {
             "hashes": [
-                "sha256:829f833f3d1fad6d0cce00387bceb57802bd661209b48f9e66f6e76fa292d113",
-                "sha256:b22ae22f3f0cdfcd80f0f7a98c52c5c86a8b4bd249289b3adcf6c5c3520ec527"
+                "sha256:5a18820903c38703859f2539a1a395f91202ead7a5550de5c091bc5651f1bafe",
+                "sha256:d56bc575b998abdfcfd82252bdc8d16e91215f778fc0c2024dfc1da07abc9e03"
             ],
             "index": "pypi",
-            "version": "==1.2.1"
+            "version": "==1.2.2"
         },
         "discord.py": {
             "hashes": [
