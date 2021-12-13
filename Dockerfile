@@ -1,24 +1,16 @@
-FROM jrottenberg/ffmpeg:4.4-scratch312 AS ffmpeg
-FROM python:3-alpine
+FROM python:3
 
 VOLUME /jassa-bot
 WORKDIR /usr/src/app
 
-COPY --from=ffmpeg / /
-
 COPY requirements.txt .
 
-# Install requirements
-RUN apk add --update --no-cache --virtual .build-deps \
-        g++ \
-        libxml2 \
-        libxml2-dev && \
-    apk add libxslt-dev && \
-    pip install --no-cache-dir -r requirements.txt && \
-    apk del .build-deps
+# Install apt packages
+RUN apt-get -y update
+RUN apt-get -y install ffmpeg
 
 # Install pip requirements
-#RUN pip install -r requirements.txt
+RUN pip install -r requirements.txt
 
 COPY src/ .
 
