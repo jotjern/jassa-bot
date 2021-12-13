@@ -530,11 +530,9 @@ async def maps(ctx, *, args: str):
                 if "Interactive Map" in map_img.text:
                     # Skip the image if its from an Interactive Map
                     continue
-                if map_img.find("img"):
-                    map_url = map_img.find("img").get("src")
-                    map_url = map_url.split("/")[:8]
-                    hd_url = "/".join(map_url)
-                    await ctx.send(hd_url)
+                if map_img.find("a"):
+                    map_url = map_img.find("a").get("href")
+                    await ctx.send(map_url)
             await ctx.message.add_reaction(ok)
         else:
             await ctx.message.add_reaction(no)
