@@ -372,20 +372,22 @@ async def shutup(ctx):
 async def quest(ctx, *, args: str):
     await ctx.message.add_reaction(ok)
     query = quote(args)
-    search_url = "https://escapefromtarkov.gamepedia.com/Special:Search?search=" + query
+    search_url = "https://escapefromtarkov.gamepedia.com/Special:Search?scope=internal&search=" + query
     r = requests.get(search_url)
     results = bs(r.text, "html.parser")
+    # Find the first search result
     if results.find("a", class_="unified-search__result__title"):
         result = results.find("a", class_="unified-search__result__title").get("href")
         r = requests.get(result)
         page = bs(r.text, "html.parser")
     else:
         page = results
+    # Handle disambiguation pages
     if page.find("table", class_="plainlinks ambox ambox-green"):
         result = "https://escapefromtarkov.gamepedia.com" + page.find("div", class_="mw-parser-output").find("a").get("href")
         r = requests.get(result)
         page = bs(r.text, "html.parser")
-    title = page.find("h1").get_text()
+    title = page.find("h1", id="firstHeading").get_text().strip()
     if "Search results for" in title:
         await ctx.send(f"Unable to find {discord.utils.escape_markdown(args)}, try being more specific.")
         return
@@ -399,22 +401,23 @@ async def quest(ctx, *, args: str):
         except IndexError:
             # If no results are found, state so
             embed.add_field(name="Price", value=f"No results found for {title}")
-            return
-        name = tarkov_item["name"]
-        price = format(tarkov_item["price"], ",")
-        avg24h = format(tarkov_item["avg24hPrice"], ",")
-        per_slot = format(int(tarkov_item["price"] / tarkov_item["slots"]), ",")
-        trader_name = tarkov_item["traderName"]
-        trader_price = format(tarkov_item["traderPrice"], ",")
-        trader_currency = tarkov_item["traderPriceCur"]
-
-        # Check if wiki and API name is same, if not display API name to avoid wrong price
-        if name == title:
-            name_string = "Price"
         else:
-            name_string = f"Price ({name})"
+            name = tarkov_item["name"]
+            price = format(tarkov_item["price"], ",")
+            avg24h = format(tarkov_item["avg24hPrice"], ",")
+            per_slot = format(int(tarkov_item["price"] / tarkov_item["slots"]), ",")
+            market_link = tarkov_item["link"]
+            trader_name = tarkov_item["traderName"]
+            trader_price = format(tarkov_item["traderPrice"], ",")
+            trader_currency = tarkov_item["traderPriceCur"]
 
-        embed.add_field(name=name_string, value=f"**Current:** {price} ₽\n**Per slot:** {per_slot} ₽\n**24h average:** {avg24h} ₽\n**{trader_name}:** {trader_price} {trader_currency}")
+            # Check if wiki and API name is same, if not display API name to avoid wrong price
+            if name == title:
+                name_string = "Price"
+            else:
+                name_string = f"Price ({name})"
+
+            embed.add_field(name=name_string, value=f"**Current:** {price} ₽\n**Per slot:** {per_slot} ₽\n**24h average:** {avg24h} ₽\n**{trader_name}:** {trader_price} {trader_currency}\n[More info]({market_link})")
 
     if page.find(id="Quests"):
         quests = page.find(id="Quests").find_parent("h2").find_next_sibling("ul").find_all("li")
@@ -488,15 +491,15 @@ async def quest(ctx, *, args: str):
             embed.add_field(name="Crafting", value=f"Too many crafts to show, see more [here]({r.url + '#Crafting'})", inline=False)
         else:
             embed.add_field(name="Crafting", value=crafts_string, inline=False)
-    icon = None
 
     # Check for icon
+    icon = None
     if page.find("td", class_="va-infobox-icon"):
-        icon = page.find("td", class_="va-infobox-icon").find("img").get("src")
+        icon = page.find("td", class_="va-infobox-icon").find("a", class_="image").get("href")
     else:
         # TODO: Make it so that it retries until it finds an item
         if page.find("td", class_="va-infobox-mainimage-image"):
-            icon = page.find("td", class_="va-infobox-mainimage-image").find("img").get("src")
+            icon = page.find("td", class_="va-infobox-mainimage-image").find("a", class_="image").get("href")
         embed.set_footer(text="This might not be an item")
 
     if icon is not None:
