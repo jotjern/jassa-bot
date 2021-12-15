@@ -370,6 +370,7 @@ async def shutup(ctx):
 
 @bot.command(aliases=["q"])
 async def quest(ctx, *, args: str):
+    # TODO: Detect quests, and give quest objectives
     await ctx.message.add_reaction(ok)
     query = quote(args)
     search_url = "https://escapefromtarkov.gamepedia.com/Special:Search?scope=internal&search=" + query
@@ -438,59 +439,71 @@ async def quest(ctx, *, args: str):
 
     if page.find(id="Hideout"):
         uses_element = page.find(id="Hideout").find_parent("h2").find_next_sibling()
-        uses_string = ""
-        if uses_element.name == "p":
-            uses_string = uses_element.text
-        else:
-            uses = uses_element.find_all("li")
-            for use in uses:
-                uses_string += use.get_text() + "\n"
-        if len(uses_string) > 1024:
-            embed.add_field(name="Hideout", value=f"Too many hideout uses to show, see more [here]({r.url + '#Hideout'})", inline=False)
-        else:
-            embed.add_field(name="Hideout", value=uses_string, inline=False)
+        # If uses_element isn't "ul", there's probably no hideout uses
+        if uses_element.name == "ul":
+            uses_string = ""
+            if uses_element.name == "p":
+                uses_string = uses_element.text
+            else:
+                uses = uses_element.find_all("li")
+                for use in uses:
+                    uses_string += use.get_text() + "\n"
+            if len(uses_string) > 1024:
+                embed.add_field(name="Hideout", value=f"Too many hideout uses to show, see more [here]({r.url + '#Hideout'})", inline=False)
+            else:
+                embed.add_field(name="Hideout", value=uses_string, inline=False)
 
     # TODO: Fix formatting for Trading and Crafting embed
     #       Fix weird formatting for multiple items (both with x amount and + another item)
     #       Formatting for additional notes (ex. "After completing his task ...")
     if page.find(id="Trading"):
-        trades = page.find(id="Trading").find_parent("h2").find_next_sibling("table").find_all("tr")
-        trades_string = ""
-        previous_level = ""
-        for trade in trades:
-            th = trade.find_all("th")
-            trader_info = th[2].get_text().strip().split()
-            trader = trader_info[0]
-            trader_level = trader_info[1]
-            barter_in = th[0].get_text().strip()
-            barter_out = th[4].get_text().strip()
-            if trader_level != previous_level:
-                trades_string += f"**{trader} {trader_level}:**\n"
-            previous_level = trader_level
-            trades_string += f"{barter_in} -> {barter_out}\n"
-        if len(trades_string) > 1024:
-            embed.add_field(name="Trading", value=f"Too many trades to show, see more [here]({r.url + '#Trading'})", inline=False)
+        # If the Trading tab is empty, skip it
+        try:
+            trades = page.find(id="Trading").find_parent("h2").find_next_sibling("table", class_="wikitable").find_all("tr")
+        except AttributeError:
+            pass
         else:
-            embed.add_field(name="Trading", value=trades_string, inline=False)
+            trades_string = ""
+            previous_level = ""
+            for trade in trades:
+                th = trade.find_all("th")
+                trader_info = th[2].get_text().strip().split()
+                trader = trader_info[0]
+                trader_level = trader_info[1]
+                barter_in = th[0].get_text().strip()
+                barter_out = th[4].get_text().strip()
+                if trader_level != previous_level:
+                    trades_string += f"**{trader} {trader_level}:**\n"
+                previous_level = trader_level
+                trades_string += f"{barter_in} -> {barter_out}\n"
+            if len(trades_string) > 1024:
+                embed.add_field(name="Trading", value=f"Too many trades to show, see more [here]({r.url + '#Trading'})", inline=False)
+            else:
+                embed.add_field(name="Trading", value=trades_string, inline=False)
 
     if page.find(id="Crafting"):
-        crafts = page.find(id="Crafting").find_parent("h2").find_next_sibling("table").find_all("tr")
-        crafts_string = ""
-        previous_station = ""
-        for craft in crafts:
-            th = craft.find_all("th")
-            station = th[2].find("big").get_text()
-            time = th[2].get_text().strip().replace(station, "")
-            craft_in = th[0].get_text().strip()
-            craft_out = th[4].get_text().strip()
-            if station != previous_station:
-                crafts_string += f"**{station}:**\n"
-            previous_station = station
-            crafts_string += f"{time}: {craft_in} -> {craft_out}\n"
-        if len(crafts_string) > 1024:
-            embed.add_field(name="Crafting", value=f"Too many crafts to show, see more [here]({r.url + '#Crafting'})", inline=False)
+        # If the Crafting tab is empty, skip it
+        try:
+            crafts = page.find(id="Crafting").find_parent("h2").find_next_sibling("table", class_="wikitable").find_all("tr")
+        except AttributeError:
+            pass
         else:
-            embed.add_field(name="Crafting", value=crafts_string, inline=False)
+            crafts_string = ""
+            previous_station = ""
+            for craft in crafts:
+                th = craft.find_all("th")
+                station = th[2].find("big").get_text()
+                time = th[2].get_text().strip().replace(station, "")
+                craft_in = th[0].get_text().strip()
+                craft_out = th[4].get_text().strip()
+                if station != previous_station:
+                    crafts_string += f"**{station}:**\n"
+                previous_station = station
+                crafts_string += f"{time}: {craft_in} -> {craft_out}\n"
+            if len(crafts_string) > 1024:
+                embed.add_field(name="Crafting", value=f"Too many crafts to show, see more [here]({r.url + '#Crafting'})", inline=False)
+            else:
+                embed.add_field(name="Crafting", value=crafts_string, inline=False)
 
     # Check for icon
     icon = None
