@@ -15,7 +15,7 @@ discord-together = "*"
 
 [dev-packages]
 pre-commit = "*"
-black = "==20.8b1"
+black = "==21.12b0"
 
 [requires]
 python_version = "3"
