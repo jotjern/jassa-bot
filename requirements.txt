@@ -15,6 +15,7 @@ future==0.18.2
 idna==3.3
 lxml==4.7.1
 multidict==5.2.0
+pymongo==4.0.1
 requests==2.26.0
 rule34==1.8.1
 soupsieve==2.3.1

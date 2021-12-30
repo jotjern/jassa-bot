@@ -12,6 +12,7 @@ ffmpeg-python = "*"
 requests = "*"
 colorlog = "*"
 discord-together = "*"
+pymongo = "*"
 
 [dev-packages]
 pre-commit = "*"

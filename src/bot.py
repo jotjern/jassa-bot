@@ -5,7 +5,6 @@ import json
 import logging
 import os
 import random
-import stat
 import sys
 import time
 import traceback
@@ -15,13 +14,15 @@ from urllib.parse import quote
 
 import colorlog
 import discord
-from discord.errors import HTTPException
 import ffmpeg
+import pymongo
 import requests
 import rule34
 from bs4 import BeautifulSoup as bs
+from discord.errors import HTTPException
 from discord.ext import commands
 from discord_together import DiscordTogether
+from pymongo.errors import ServerSelectionTimeoutError
 
 token = os.environ["BOT_TOKEN"]
 ownerid = int(os.environ["OWNER_ID"])
@@ -58,6 +59,66 @@ ok = "✅"
 no = "❌"
 nsfw = "🔞"
 
+
+# Connect to MongoDB and handle migration/creation of database
+db_client = pymongo.MongoClient(os.environ["MONGO_URI"], serverSelectionTimeoutMS=5000)
+
+db = db_client.jasså
+servers_coll = db.servers
+
+
+async def add_servers_to_db():
+    new_servers = []
+    await bot.wait_until_ready()
+    logger.info(bot.guilds)
+    for server in bot.guilds:
+        new_servers.append({
+            "_id": server.id,
+            "nickname_log_channel": None,
+            "aliases": {},
+        })
+    insert_result = servers_coll.insert_many(new_servers, ordered=False)
+    logger.info(f"Added {len(insert_result.inserted_ids)} servers to database")
+    if len(bot.guilds) != len(insert_result.inserted_ids):
+        logger.warning("Some servers were not added to the database!")
+
+
+async def init_db():
+    db_names = db_client.list_database_names()
+    if "jasså" in db_names:
+        logger.info("Connected to MongoDB")
+    else:
+        if os.path.isfile("/jassa-bot/aliases.json") or os.path.isfile("/jassa-bot/servers.json"):
+            logger.warning("Old json files found, migrating to new MongoDB database")
+            await add_servers_to_db()
+            # Migrate stuff
+            with open("/jassa-bot/servers.json", "r") as f:
+                servers = json.load(f)
+            for server in servers:
+                servers_coll.update_one(
+                    {"_id": int(server)},
+                    {"$set": {"nickname_log_channel": servers[server]["nickname_log_channel"]}},
+                    upsert=True
+                )
+            with open("/jassa-bot/aliases.json", "r") as f:
+                aliases = json.load(f)
+            for server in aliases:
+                new_aliases = {}
+                for alias, channel_id in aliases[server].items():
+                    logger.info(alias)
+                    logger.info(int(channel_id))
+                    new_aliases[alias] = int(channel_id)
+                servers_coll.update_one(
+                    {"_id": int(server)},
+                    {"$set": {"aliases": new_aliases}},
+                    upsert=True
+                )
+        else:
+            logger.warning("MongoDB database not found, creating new database")
+            # Add all servers to database
+            await add_servers_to_db()
+
+
 # TODO: Add a task that selects a random user to change server icon
 # TODO: Add pin command (custom pin channel, that works over the 50 cap)
 
@@ -78,17 +139,6 @@ try:
     else:
         os.makedirs("/jassa-bot/output/optimized")
         logger.info("Made output folders, persistence is now enabled")
-    # TODO: Merge servers.json and aliases.json
-    if not os.path.isfile("/jassa-bot/aliases.json"):
-        logger.info("Missing aliases.json, making file")
-        with open("/jassa-bot/aliases.json", "x") as f:
-            f.write("{}")
-        os.chmod("/jassa-bot/aliases.json", stat.S_IRWXO)
-    if not os.path.isfile("/jassa-bot/servers.json"):
-        logger.info("Missing servers.json, making file")
-        with open("/jassa-bot/servers.json", "x") as f:
-            f.write("{}")
-        os.chmod("/jassa-bot/servers.json", stat.S_IRWXO)
 except PermissionError as e:
     logger.warning(e)
     logger.warning("Permission denied for /jassa-bot directory. Persistence will not work!")
@@ -99,6 +149,27 @@ async def on_ready():
     await bot.change_presence(activity=discord.Game(f"{prefix}jasså"))
     bot.togetherControl = await DiscordTogether(token)
     logger.info(f"Logged in as {bot.user}")
+    # TODO: Rework this
+    try:
+        await init_db()
+    except ServerSelectionTimeoutError:
+        logger.critical("Could not connect to MongoDB")
+
+
+@bot.event
+async def on_guild_join(guild: discord.Guild):
+    db.servers.insert_one({
+        "_id": guild.id,
+        "nickname_log_channel": None,
+        "aliases": {},
+    })
+    logger.info(f"Joined new guild: {guild.name}")
+
+
+@bot.event
+async def on_guild_remove(guild: discord.Guild):
+    db.servers.delete_one({"_id": guild.id})
+    logger.info(f"Removed from guild: {guild.name}")
 
 
 @bot.event
@@ -271,18 +342,22 @@ async def setnick(ctx, member: discord.Member, *, nickname: str = None):
         await member.edit(nick=nickname)
     except discord.Forbidden:
         await ctx.message.add_reaction(no)
-        return await ctx.send("Missing permissions to change that user's nickname")
+        return await ctx.send("Missing permissions to change that user's nickname. Make sure my role is about theirs.")
     await ctx.message.add_reaction(ok)
 
     # Send to log
-    with open("/jassa-bot/servers.json") as f:
-        servers = json.load(f)
-    try:
-        log_id = servers[str(ctx.guild.id)]["nickname_log_channel"]
-        log_channel = bot.get_channel(log_id)
-    except KeyError:
+    server = db.servers.find_one({"_id": ctx.guild.id})
+    log_id = server["nickname_log_channel"]
+    if log_id is None:
         # If no log channel is set, just return
         return
+    log_channel = bot.get_channel(log_id)
+    if log_channel is None:
+        # The channel that was set before, no longer exixts. Inform the user
+        return await ctx.send(
+            ("The nickname log channel no longer exists."
+             f"Please set a new one with `{prefix}setnicklog`.")
+        )
     # Generate embed
     embed = discord.Embed(
         description=f"**{ctx.author.mention} changed nickname of {member.mention}**",
@@ -308,20 +383,32 @@ async def setnick_error(ctx, error):
 @bot.command()
 @commands.guild_only()
 @commands.has_guild_permissions(manage_guild=True)
-async def setnicklog(ctx, channel: discord.TextChannel):
+async def setnicklog(ctx, channel: discord.TextChannel = None):
+    # Remove the current log channel
+    if channel is None:
+        # If there wasn't already a channel set, send command usage (since it was probably a user error)
+        if db.servers.find_one({"_id": ctx.guild.id})["nickname_log_channel"] is None:
+            await ctx.message.add_reaction(no)
+            return await ctx.send(
+                ("Unable to remove log channel, since none was set before.\n"
+                 f"Usage: `{prefix}setnicklog <channel>`, to remove the channel again just use `{prefix}setnicklog`")
+            )
+        # Remove the channel from the database
+        db.servers.update_one(
+            {"_id": ctx.guild.id},
+            {"$set": {"nickname_log_channel": None}}
+        )
+        await ctx.message.add_reaction(ok)
+        return await ctx.send("Removed nickname log channel")
     if channel.guild != ctx.guild:
         await ctx.send("Cannot set log channel outside of server")
         return await ctx.message.add_reaction(no)
-    with open("/jassa-bot/servers.json", "r") as f:
-        servers = json.load(f)
-    try:
-        servers[str(ctx.guild.id)]
-    except KeyError:
-        print("Guild ID not already in servers.json, adding it")
-        servers[str(ctx.guild.id)] = {}
-    servers[str(ctx.guild.id)]["nickname_log_channel"] = channel.id
-    with open("/jassa-bot/servers.json", "w") as f:
-        json.dump(servers, f, indent=4)
+    # Check if bot has permissions to send messages in channel
+    if not channel.permissions_for(ctx.guild.me).send_messages:
+        await ctx.send("I don't have permission to send messages in that channel")
+        return await ctx.message.add_reaction(no)
+    # Update the database
+    db.servers.update_one({"_id": ctx.guild.id}, {"$set": {"nickname_log_channel": channel.id}})
     await channel.send(f"Successfully set this as the log channel for the `{prefix}setnick` command")
     await ctx.message.add_reaction(ok)
 
@@ -580,19 +667,42 @@ async def vcmute(ctx):
 
 
 @bot.command(aliases=["mv"])
+@commands.guild_only()
 @commands.has_guild_permissions(move_members=True)
 async def moveall(ctx, *, channel: str):
-    with open("/jassa-bot/aliases.json", "r") as f:
-        aliases = json.load(f)
+    # TODO: Do this after migrating to Novus
+    # try:
+    #     # Try to find channel from ID, mention or string
+    #     await commands.run_converters(ctx, commands.VoiceChannelConverter, channel)
+    # except ChannelNotFound:
+    #     # If it fails, try to find channel from alias
+    #     aliases = db.servers.find_one({"_id": ctx.guild.id})["aliases"]
+    #     try:
+    #         channel = ctx.bot.get_channel(aliases[channel])
+    #     except KeyError:
+    #         return await ctx.send(
+    #             ("Channel not found. Please use the ID, mention or full name of the channel.\n"
+    #             f"Use `{prefix}alias` to set an alias.")
+    #         )
+
+    if ctx.author.voice is None:
+        return await ctx.send("You need to be in a voice channel to run this command")
+
+    # Get aliases from the database
+    aliases = db.servers.find_one({"_id": ctx.guild.id})["aliases"]
+
     try:
-        channel = aliases[str(ctx.guild.id)][channel]
-        channel = bot.get_channel(int(channel))
+        # If channel is an alias, get the actual channel
+        channel = aliases[channel]
+        channel = ctx.guild.get_channel(channel)
     except KeyError:
+        # If no alias was found, try to find the channel
         channel = discord.utils.find(lambda x: x.name == channel, ctx.guild.voice_channels)
+
     if channel is None:
         await ctx.message.add_reaction(no)
         return await ctx.send("Unable to find channel")
-    for member in ctx.message.author.voice.channel.members:
+    for member in ctx.author.voice.channel.members:
         await member.move_to(channel)
         logger.info(f"Moved {member} to {channel} in {ctx.guild}")
     await ctx.message.add_reaction(ok)
@@ -608,29 +718,25 @@ async def moveall_error(ctx, error):
         await ctx.send("Unable to find channel")
 
 
+# TODO: Add an alias list command
 @bot.command(aliases=["mvalias", "movealias"])
+@commands.guild_only()
 @commands.has_guild_permissions(administrator=True)
-async def alias(ctx, alias: str, channel: discord.VoiceChannel = None):
+async def alias(ctx: commands.Context, alias: str, channel: discord.VoiceChannel = None):
     await ctx.message.add_reaction(ok)
-    with open("/jassa-bot/aliases.json", "r") as f:
-        aliases = json.load(f)
-    try:
-        aliases[str(ctx.guild.id)]
-    except KeyError:
-        print("Guild ID not already in list, adding it")
-        aliases[str(ctx.guild.id)] = {}
-
+    # Get the aliases object from the database
+    aliases: dict = db.servers.find_one({"_id": ctx.guild.id})["aliases"]
     if channel is None:
-        await ctx.send(f"Removed alias for channel ID {aliases[str(ctx.guild.id)][alias]}")
-        aliases[str(ctx.guild.id)].pop(alias)
+        # Remove the alias
+        await ctx.send(f"Removed alias for channel {ctx.bot.get_channel(aliases[alias]).mention}")
+        aliases.pop(alias)
     else:
-        alias_list = {}
-        alias_list[alias] = str(channel.id)
-        aliases[str(ctx.guild.id)].update(alias_list)
-        await ctx.send("Added alias for channel")
-
-    with open("/jassa-bot/aliases.json", "w") as f:
-        json.dump(aliases, f, indent=4)
+        # Add the alias
+        aliases[alias] = channel.id
+        await ctx.send(f"Added {alias} as alias for channel {channel.mention}")
+    # Send the modified aliases object to the database
+    # ? Convert the dict (object) to a list (array) to make it easier to edit ($pull and $push)
+    db.servers.update_one({"_id": ctx.guild.id}, {"$set": {"aliases": aliases}})
 
 
 @alias.error
