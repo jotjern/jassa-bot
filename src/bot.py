@@ -221,7 +221,12 @@ async def on_command_error(ctx, error):
             if "NoneType: None" in trace:
                 trace = str(error)
             if len(trace) < 2000:
-                await owner.send(f"**Guild:** {ctx.guild.name} **Channel:** {ctx.channel.name} **Command:** {ctx.command.name} **Time:** {datetime.now().strftime('%d/%m/%Y %H:%M:%S')}\n```\n{trace}\n```")
+                await owner.send(
+                    (f"**Guild:** {ctx.guild.name} **Channel:** {ctx.channel.name}"
+                     f"**Command:** {ctx.command.name}"
+                     f"**Time:** {datetime.now().strftime('%d/%m/%Y %H:%M:%S')}"
+                     f"[Message link]({ctx.message.jump_url})\n```\n{trace}\n```")
+                )
             else:
                 await owner.send(f"{ctx.command.name} errored in {ctx.guild.name}, {ctx.channel.name} at {datetime.now().strftime('%d/%m/%Y %H:%M:%S')}")
                 await owner.send(file=discord.File(io.StringIO(trace), filename="traceback.txt"))
