@@ -656,7 +656,7 @@ async def maps(ctx, *, args: str):
             await ctx.send(f"Unable to find any maps for **{args}**")
 
 
-@maps.error()
+@maps.error
 async def maps_error(ctx, error):
     if isinstance(error, commands.MissingRequiredArgument):
         await ctx.message.add_reaction(no)
