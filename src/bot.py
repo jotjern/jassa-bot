@@ -15,6 +15,7 @@ from urllib.parse import quote
 
 import colorlog
 import discord
+from discord.errors import HTTPException
 import ffmpeg
 import requests
 import rule34
@@ -44,12 +45,13 @@ logger = logging.getLogger("bot")
 logger.setLevel(logging_level)
 logger.addHandler(handler)
 
+
 rule34 = rule34.Sync()
 
 intents = discord.Intents().default()
 intents.members = True
 
-bot = commands.Bot(command_prefix=prefix, owner_id=ownerid, intents=intents)
+bot = commands.Bot(command_prefix=commands.when_mentioned_or(prefix), owner_id=ownerid, intents=intents)
 
 # Emojis :)
 ok = "✅"
@@ -127,6 +129,12 @@ async def on_command_error(ctx, error):
             await ctx.send(f"You are missing the following permissions for this command: `{'`, `'.join(error.missing_perms)}`")
         else:
             await ctx.send(f"You need the `{error.missing_perms[0]}` permission to use this command")
+    elif isinstance(error, commands.BotMissingPermissions):
+        await ctx.message.add_reaction(no)
+        if len(error.missing_perms) > 1:
+            await ctx.send(f"I am missing the following permissions for this command: `{'`, `'.join(error.missing_perms)}`")
+        else:
+            await ctx.send(f"I need the `{error.missing_perms[0]}` permission to use this command")
     elif not isinstance(error, commands.CommandNotFound):
         # Only error if not already handled
         matches = [no, nsfw]
@@ -390,7 +398,10 @@ async def quest(ctx, *, args: str):
         page = bs(r.text, "html.parser")
     title = page.find("h1", id="firstHeading").get_text().strip()
     if "Search results for" in title:
-        await ctx.send(f"Unable to find {discord.utils.escape_markdown(args)}, try being more specific.")
+        try:
+            await ctx.send(f"Unable to find {discord.utils.escape_markdown(args)}, try being more specific.")
+        except HTTPException:
+            await ctx.send("Unable to find item, try being more specific.")
         return
     embed = discord.Embed(title=title, url=r.url)
 
@@ -420,6 +431,7 @@ async def quest(ctx, *, args: str):
 
             embed.add_field(name=name_string, value=f"**Current:** {price} ₽\n**Per slot:** {per_slot} ₽\n**24h average:** {avg24h} ₽\n**{trader_name}:** {trader_price} {trader_currency}\n[Data from tarkov-market.com]({market_link})")
 
+    # TODO: Give some sort of error when the wiki page has weird formatting
     if page.find(id="Quests"):
         quests = page.find(id="Quests").find_parent("h2").find_next_sibling("ul").find_all("li")
         quests_string = ""
@@ -701,14 +713,21 @@ async def r34(ctx, *, tags):
             logger.info(f"Rule34: Sent {random_url} with tag(s): {tags}")
         else:
             logger.info(f"Rule34: No posts were found with the tag(s): {tags}")
-            await ctx.send(f"No posts were found with the tag(s): {tags}")
+            await ctx.send(
+                f"No posts were found with the tag(s): {discord.utils.escape_mentions(tags)}"
+            )
 
 
 @r34.error
 async def r34_error(ctx, error):
     if isinstance(error, commands.MissingRequiredArgument):
         await ctx.message.add_reaction(no)
-        await ctx.send(f"Missing tags to search for.\nUsage: `{prefix}r34/rule34 <tags>` or for multiple tags `{prefix}r34/rule34 <tag1> <tag2> ...`")
+        await ctx.send(
+            ("Missing tags to search for.\n"
+             f"Usage: `{prefix}r34/rule34 <tags>` or for multiple tags "
+             f"`{prefix}r34/rule34 <tag1> <tag2> ...`\n"
+             "If your tag has spaces in it use underscores (`_`) instead.")
+        )
 
 
 @bot.command()
