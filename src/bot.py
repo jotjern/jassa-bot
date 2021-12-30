@@ -70,7 +70,6 @@ servers_coll = db.servers
 async def add_servers_to_db():
     new_servers = []
     await bot.wait_until_ready()
-    logger.info(bot.guilds)
     for server in bot.guilds:
         new_servers.append({
             "_id": server.id,
@@ -105,8 +104,6 @@ async def init_db():
             for server in aliases:
                 new_aliases = {}
                 for alias, channel_id in aliases[server].items():
-                    logger.info(alias)
-                    logger.info(int(channel_id))
                     new_aliases[alias] = int(channel_id)
                 servers_coll.update_one(
                     {"_id": int(server)},
