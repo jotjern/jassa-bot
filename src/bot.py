@@ -651,6 +651,13 @@ async def maps(ctx, *, args: str):
             await ctx.send(f"Unable to find any maps for **{args}**")
 
 
+@maps.error()
+async def maps_error(ctx, error):
+    if isinstance(error, commands.MissingRequiredArgument):
+        await ctx.message.add_reaction(no)
+        await ctx.send(f"Missing map name. Usage: `{prefix}maps <name>`")
+
+
 @bot.command()
 @commands.has_guild_permissions(administrator=True)
 async def vcmute(ctx):
