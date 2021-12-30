@@ -113,6 +113,9 @@ async def init_db():
                     {"$set": {"aliases": new_aliases}},
                     upsert=True
                 )
+            os.remove("/jassa-bot/servers.json")
+            os.remove("/jassa-bot/aliases.json")
+            logger.info("Successfully migrated to new MongoDB database, and removed old files")
         else:
             logger.warning("MongoDB database not found, creating new database")
             # Add all servers to database
