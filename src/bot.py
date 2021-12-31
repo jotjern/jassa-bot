@@ -196,16 +196,16 @@ async def on_command_error(ctx, error):
         await ctx.send("This command is only available in a guild")
     elif isinstance(error, commands.MissingPermissions):
         await ctx.message.add_reaction(no)
-        if len(error.missing_perms) > 1:
-            await ctx.send(f"You are missing the following permissions for this command: `{'`, `'.join(error.missing_perms)}`")
+        if len(error.missing_permissions) > 1:
+            await ctx.send(f"You are missing the following permissions for this command: `{'`, `'.join(error.missing_permissions)}`")
         else:
-            await ctx.send(f"You need the `{error.missing_perms[0]}` permission to use this command")
+            await ctx.send(f"You need the `{error.missing_permissions[0]}` permission to use this command")
     elif isinstance(error, commands.BotMissingPermissions):
         await ctx.message.add_reaction(no)
-        if len(error.missing_perms) > 1:
-            await ctx.send(f"I am missing the following permissions for this command: `{'`, `'.join(error.missing_perms)}`")
+        if len(error.missing_permissions) > 1:
+            await ctx.send(f"I am missing the following permissions for this command: `{'`, `'.join(error.missing_permissions)}`")
         else:
-            await ctx.send(f"I need the `{error.missing_perms[0]}` permission to use this command")
+            await ctx.send(f"I need the `{error.missing_permissions[0]}` permission to use this command")
     elif not isinstance(error, commands.CommandNotFound):
         # Only error if not already handled
         matches = [no, nsfw]
@@ -233,7 +233,7 @@ async def on_command_error(ctx, error):
         traceback.print_exception(type(error), error, error.__traceback__)
 
 
-@bot.command(aliases=["pog"])
+@bot.command()
 async def ping(ctx):
     ping = round(bot.latency * 1000)
     await ctx.send(f"{ping}ms")
@@ -366,12 +366,12 @@ async def setnick(ctx, member: discord.Member, *, nickname: str = None):
     # Generate embed
     embed = discord.Embed(
         description=f"**{ctx.author.mention} changed nickname of {member.mention}**",
-        timestamp=datetime.utcnow(),
+        timestamp=discord.utils.utcnow(),
         color=discord.Colour.random(seed=member.id)
     )
-    embed.set_author(name=str(ctx.author), icon_url=ctx.author.avatar_url)
-    embed.add_field(name="Before", value=old_nick, inline=False)
-    embed.add_field(name="After", value=nickname, inline=False)
+    embed.set_author(name=str(ctx.author), icon_url=ctx.author.display_avatar.url)
+    embed.add_field(name="Before", value=discord.utils.escape_markdown(old_nick), inline=False)
+    embed.add_field(name="After", value=discord.utils.escape_markdown(nickname), inline=False)
     await log_channel.send(embed=embed)
 
 
@@ -450,6 +450,7 @@ async def shutup(ctx):
             return await ctx.send("Won't mute a bot ;)")
         muted_role = discord.utils.get(ctx.guild.roles, name="Muted")
         if muted_role is None:
+            # TODO: Generate the muted role if none exists
             await ctx.message.remove_reaction(ok, bot.user)
             await ctx.message.add_reaction(no)
             return await ctx.send("The role `Muted` does not exist. Has it been renamed?")
@@ -681,39 +682,26 @@ async def vcmute(ctx):
 @bot.command(aliases=["mv"])
 @commands.guild_only()
 @commands.has_guild_permissions(move_members=True)
-async def moveall(ctx, *, channel: str):
-    # TODO: Do this after migrating to Novus
-    # try:
-    #     # Try to find channel from ID, mention or string
-    #     await commands.run_converters(ctx, commands.VoiceChannelConverter, channel)
-    # except ChannelNotFound:
-    #     # If it fails, try to find channel from alias
-    #     aliases = db.servers.find_one({"_id": ctx.guild.id})["aliases"]
-    #     try:
-    #         channel = ctx.bot.get_channel(aliases[channel])
-    #     except KeyError:
-    #         return await ctx.send(
-    #             ("Channel not found. Please use the ID, mention or full name of the channel.\n"
-    #             f"Use `{prefix}alias` to set an alias.")
-    #         )
-
+async def moveall(ctx, *, channel_str: str):
     if ctx.author.voice is None:
         return await ctx.send("You need to be in a voice channel to run this command")
-
-    # Get aliases from the database
-    aliases = db.servers.find_one({"_id": ctx.guild.id})["aliases"]
-
-    try:
-        # If channel is an alias, get the actual channel
-        channel = aliases[channel]
-        channel = ctx.guild.get_channel(channel)
-    except KeyError:
-        # If no alias was found, try to find the channel
-        channel = discord.utils.find(lambda x: x.name == channel, ctx.guild.voice_channels)
-
+    # Try to find channel from ID, mention or string
+    channel: discord.VoiceChannel = discord.utils.get(ctx.guild.voice_channels, name=channel_str)
     if channel is None:
+        # If it fails, try to find channel from alias
+        aliases = db.servers.find_one({"_id": ctx.guild.id})["aliases"]
+        try:
+            channel = ctx.bot.get_channel(aliases[channel_str])
+        except KeyError:
+            return await ctx.send(
+                ("Channel not found. Please use the ID, mention or full name of the channel.\n"
+                 f"Use `{prefix}alias` to set an alias.")
+            )
+    # If the channel that the alias points to has been deleted, remove the alias and inform the user
+    if channel is None:
+        db.servers.update_one({"_id": ctx.guild.id}, {"$unset": {f"aliases.{channel_str}": ""}})
         await ctx.message.add_reaction(no)
-        return await ctx.send("Unable to find channel")
+        return await ctx.send(f"The channel that this alias points to no longer exists. Removed {channel_str} from aliases.")
     for member in ctx.author.voice.channel.members:
         await member.move_to(channel)
         logger.info(f"Moved {member} to {channel} in {ctx.guild}")
@@ -724,7 +712,7 @@ async def moveall(ctx, *, channel: str):
 async def moveall_error(ctx, error):
     if isinstance(error, commands.MissingRequiredArgument):
         await ctx.message.add_reaction(no)
-        await ctx.send(f"Missing voice channel ID/name to move to. Usage: `{prefix}moveall <vc id/name>`")
+        await ctx.send(f"Missing voice channel ID/name to move to. Usage: `{prefix}moveall <vc id/name/alias>`")
     if isinstance(error, commands.ChannelNotFound):
         await ctx.message.add_reaction(no)
         await ctx.send("Unable to find channel")
@@ -740,15 +728,15 @@ async def alias(ctx: commands.Context, alias: str, channel: discord.VoiceChannel
     aliases: dict = db.servers.find_one({"_id": ctx.guild.id})["aliases"]
     if channel is None:
         # Remove the alias
-        await ctx.send(f"Removed alias for channel {ctx.bot.get_channel(aliases[alias]).mention}")
-        aliases.pop(alias)
+        if alias in aliases:
+            db.servers.update_one({"_id": ctx.guild.id}, {"$unset": {f"aliases.{alias}": ""}})
+            await ctx.send(f"Removed alias for channel {ctx.bot.get_channel(aliases[alias]).mention}")
+        else:
+            await ctx.send("That alias doesn't exist")
     else:
         # Add the alias
-        aliases[alias] = channel.id
+        db.servers.update_one({"_id": ctx.guild.id}, {"$set": {f"aliases.{alias}": channel.id}})
         await ctx.send(f"Added {alias} as alias for channel {channel.mention}")
-    # Send the modified aliases object to the database
-    # ? Convert the dict (object) to a list (array) to make it easier to edit ($pull and $push)
-    db.servers.update_one({"_id": ctx.guild.id}, {"$set": {"aliases": aliases}})
 
 
 @alias.error
@@ -761,8 +749,31 @@ async def alias_error(ctx, error):
         await ctx.send("Unable to find channel")
 
 
+@bot.command(aliases=["listalias", "al"])
+@commands.guild_only()
+async def aliaslist(ctx: commands.Context):
+    aliases: dict = db.servers.find_one({"_id": ctx.guild.id})["aliases"]
+    if len(aliases) == 0:
+        return await ctx.send("There are no aliases set")
+    list_str = ""
+    for alias, id in aliases.items():
+        channel = ctx.bot.get_channel(id)
+        # Remove alias from db if the channel doesn't exist anymore
+        if channel is None:
+            aliases.pop(alias)
+        if len(list_str) >= 1024:
+            # TODO: Add pagination
+            await ctx.send("Too many aliases to display all of them.")
+            break
+        list_str += f"{alias} -> {channel.mention}\n"
+    embed = discord.Embed(color=0x00ff00)
+    embed.add_field(name="Aliases", value=list_str)
+    await ctx.send(embed=embed)
+
+
 @bot.command(aliases=["lb", "rolelb", "leaderboard"])
 async def roleleaderboard(ctx, arg: str = None):
+    # TODO: Add pagination?
     try:
         await ctx.message.add_reaction(ok)
         if arg is None:
