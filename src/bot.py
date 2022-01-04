@@ -832,7 +832,7 @@ async def r34(ctx, *, tags):
         else:
             logger.info(f"Rule34: No posts were found with the tag(s): {tags}")
             await ctx.send(
-                f"No posts were found with the tag(s): {discord.utils.escape_mentions(tags)}"
+                f"No posts were found with the tag(s): {discord.utils.escape_markdown(discord.utils.escape_mentions(tags))}"
             )
 
 
