@@ -66,7 +66,7 @@ jobs:
         continue-on-error: true
 
       - name: Build image
-        run: docker build . --file Dockerfile --tag jassa-bot --progress=plain
+        run: docker build . --build-args ${{ github.event.workflow_run.head_commit.id }} --file Dockerfile --tag jassa-bot --progress=plain
 
       - name: Log into Dockerhub
         run: echo "${{ secrets.DOCKERHUB_PASSWORD }}" | docker login -u jorgen1040 --password-stdin

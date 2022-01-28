@@ -13,10 +13,11 @@ requests = "*"
 colorlog = "*"
 discord-together = "*"
 pymongo = {extras = ["srv"], version = "*"}
+psutil = "*"
 
 [dev-packages]
 pre-commit = "*"
 black = "==21.12b0"
 
 [requires]
-python_version = "3"
+python_version = "3.8"
