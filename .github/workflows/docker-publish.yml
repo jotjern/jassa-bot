@@ -26,7 +26,7 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-    - uses: actions/checkout@v1
+    - uses: actions/checkout@v3
     - name: Check for any exposed keys
       uses: zricethezav/gitleaks-action@master
 
@@ -41,7 +41,7 @@ jobs:
   #   runs-on: ubuntu-latest
 
   #   steps:
-  #     - uses: actions/checkout@v2
+  #     - uses: actions/checkout@v3
 
   #     - uses: satackey/action-docker-layer-caching@v0.0.11
   #       continue-on-error: true
@@ -60,7 +60,7 @@ jobs:
     if: github.event_name == 'push'
 
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
 
       - uses: satackey/action-docker-layer-caching@v0.0.11
         continue-on-error: true
