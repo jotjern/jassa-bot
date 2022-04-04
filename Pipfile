@@ -16,7 +16,7 @@ pymongo = {extras = ["srv"], version = "*"}
 
 [dev-packages]
 pre-commit = "*"
-black = "==21.12b0"
+black = "==22.3.0"
 
 [requires]
 python_version = "3"
