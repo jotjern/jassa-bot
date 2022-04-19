@@ -347,7 +347,7 @@ async def setnick(ctx, member: discord.Member, *, nickname: str = None):
         await member.edit(nick=nickname)
     except discord.Forbidden:
         await ctx.message.add_reaction(no)
-        return await ctx.send("Missing permissions to change that user's nickname. Make sure my role is about theirs.")
+        return await ctx.send("Missing permissions to change that user's nickname. Make sure my role is above theirs.")
     await ctx.message.add_reaction(ok)
 
     # Send to log
