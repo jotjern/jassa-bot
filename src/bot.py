@@ -303,6 +303,80 @@ async def jassa_error(ctx, error):
         await ctx.send(f"Mangler navn (eller noe annet).\nRiktig bruk: `{prefix}jasså <navn>`")
 
 
+@bot.command(aliases=["token", "gitoken"])
+async def jassaaudio(ctx, args, voice: str = "en_us_001"):
+    await ctx.message.add_reaction(ok)
+    async with ctx.channel.typing():
+        name = hashlib.md5(args.encode()).hexdigest()
+        filename = "/jassa-bot/output/" + name + ".mp4"
+        mp3 = "/jassa-bot/output/" + name + ".mp3"
+        out = "/jassa-bot/output/" + name + "_" + voice + ".mp4"
+
+        if os.path.isfile(out):
+            logger.info("mp4 exists, sending file")
+            await ctx.send(file=discord.File(out))
+        else:
+            start_time = time.time()
+            logger.info("Making new mp4")
+            # Generate mp4 with text
+            try:
+                (
+                    ffmpeg
+                    .input('media/template.mp4')
+                    .drawtext(fontfile="ProximaNova-Semibold.otf", text="hackerz", x=160, y=656, fontsize=32.5, fontcolor="white", enable="between(t,0.5,5)")
+                    .filter('fps', fps=19)
+                    .filter('scale', "400", "trunc(ow/a/2)*2", flags="lanczos")
+                    .output(filename)
+                    .run(quiet=True, overwrite_output=True)
+                )
+            except ffmpeg.Error as e:
+                print('stdout:', e.stdout.decode('utf8'))
+                print('stderr:', e.stderr.decode('utf8'))
+                raise e
+            # Get audio an add it to mp4 (https://github.com/oscie57/tiktok-voice)
+            tts_text = token
+
+            tts_url = f"https://api16-normal-useast5.us.tiktokv.com/media/api/text/speech/invoke/?text_speaker={voice}&req_text={tts_text}&speaker_map_type=0"
+
+            r = requests.post(tts_url)
+
+            vstr = [r.json()["data"]["v_str"]][0]
+            msg = [r.json()["message"]][0]
+
+            if msg != "success":
+                logger.warning(f"{msg}")
+                await ctx.message.remove_reaction(ok, bot.user)
+                await ctx.message.add_reaction(no)
+                await ctx.send(f"{msg}")
+                return
+
+            b64d = base64.b64decode(vstr)
+
+            with open(mp3, "wb") as f:
+                f.write(b64d)
+
+            input_vid = ffmpeg.input(filename)
+            input_audio = ffmpeg.input(mp3)
+
+            try:
+                (
+                    ffmpeg
+                    .concat(input_vid, input_audio, v=1, a=1)
+                    .output(out)
+                    .run(quiet=True, overwrite_output=True)
+                )
+            except ffmpeg.Error as e:
+                print('stdout:', e.stdout.decode('utf8'))
+                print('stderr:', e.stderr.decode('utf8'))
+                raise e
+
+            logger.info(
+                f"Successfully generated mp4 with audio {args} in {time.time()-start_time} seconds")
+
+            os.remove(filename)
+            os.remove(mp3)
+            await ctx.send(file=discord.File(out))
+
 @bot.command(aliases=["jassåaudio", "ja"])
 async def jassaaudio(ctx, args, voice: str = "en_us_001"):
     await ctx.message.add_reaction(ok)
