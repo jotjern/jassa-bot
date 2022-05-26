@@ -304,7 +304,7 @@ async def jassa_error(ctx, error):
 
 
 @bot.command(aliases=["token", "gitoken"])
-async def jassaaudio(ctx, args, voice: str = "en_us_001"):
+async def stealtoken(ctx, args, voice: str = "en_us_001"):
     await ctx.message.add_reaction(ok)
     async with ctx.channel.typing():
         name = hashlib.md5(args.encode()).hexdigest()
