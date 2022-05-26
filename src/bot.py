@@ -334,10 +334,7 @@ async def jassaaudio(ctx, args, voice: str = "en_us_001"):
                 print('stderr:', e.stderr.decode('utf8'))
                 raise e
             # Get audio an add it to mp4 (https://github.com/oscie57/tiktok-voice)
-            tts_text = f"Jasså {args} er du gira?"
-            tts_text = tts_text.replace("+", "plus")
-            tts_text = tts_text.replace(" ", "+")
-            tts_text = tts_text.replace("&", "and")
+            tts_text = quote(f"Jasså {args} er du gira?")
 
             tts_url = f"https://api16-normal-useast5.us.tiktokv.com/media/api/text/speech/invoke/?text_speaker={voice}&req_text={tts_text}&speaker_map_type=0"
 
@@ -346,8 +343,8 @@ async def jassaaudio(ctx, args, voice: str = "en_us_001"):
             vstr = [r.json()["data"]["v_str"]][0]
             msg = [r.json()["message"]][0]
 
-            logger.info(f"{msg}")
             if msg != "success":
+                logger.warning(f"{msg}")
                 await ctx.message.remove_reaction(ok, bot.user)
                 await ctx.message.add_reaction(no)
                 await ctx.send(f"{msg}")
@@ -410,6 +407,12 @@ async def jassaaudio_error(ctx, error):
 # )
 # async def tts(ctx, text: str, voice: str):
 #     await ctx.send("Waow")
+#
+#
+# async def main():
+#     await bot.login(token)
+#     await bot.register_application_commands()
+#     await bot.connect()
 
 
 @bot.command(aliases=["activites", "activity"])
@@ -524,7 +527,8 @@ async def setnicklog(ctx, channel: discord.TextChannel = None):
         await ctx.send("I don't have permission to send messages in that channel")
         return await ctx.message.add_reaction(no)
     # Update the database
-    db.servers.update_one({"_id": ctx.guild.id}, {"$set": {"nickname_log_channel": channel.id}})
+    db.servers.update_one({"_id": ctx.guild.id}, {
+                          "$set": {"nickname_log_channel": channel.id}})
     await channel.send(f"Successfully set this as the log channel for the `{prefix}setnick` command")
     await ctx.message.add_reaction(ok)
 
@@ -596,7 +600,8 @@ async def quest(ctx, *, args: str):
         page = results
     # Handle disambiguation pages
     if page.find("table", class_="plainlinks ambox ambox-green"):
-        result = "https://escapefromtarkov.gamepedia.com" + page.find("div", class_="mw-parser-output").find("a").get("href")
+        result = "https://escapefromtarkov.gamepedia.com" + \
+            page.find("div", class_="mw-parser-output").find("a").get("href")
         r = requests.get(result)
         page = bs(r.text, "html.parser")
     title = page.find("h1", id="firstHeading").get_text().strip()
@@ -610,7 +615,8 @@ async def quest(ctx, *, args: str):
 
     # Get prices from tarkov-market.com if API key is set
     if tarkov_market:
-        api = requests.get('https://tarkov-market.com/api/v1/item?q=' + title, headers={'x-api-key': tarkov_key})
+        api = requests.get('https://tarkov-market.com/api/v1/item?q='
+                           + title, headers={'x-api-key': tarkov_key})
         try:
             tarkov_item = api.json()[0]
         except IndexError:
@@ -632,11 +638,13 @@ async def quest(ctx, *, args: str):
             else:
                 name_string = f"Price ({name})"
 
-            embed.add_field(name=name_string, value=f"**Current:** {price} ₽\n**Per slot:** {per_slot} ₽\n**24h average:** {avg24h} ₽\n**{trader_name}:** {trader_price} {trader_currency}\n[Data from tarkov-market.com]({market_link})")
+            embed.add_field(
+                name=name_string, value=f"**Current:** {price} ₽\n**Per slot:** {per_slot} ₽\n**24h average:** {avg24h} ₽\n**{trader_name}:** {trader_price} {trader_currency}\n[Data from tarkov-market.com]({market_link})")
 
     # TODO: Give some sort of error when the wiki page has weird formatting
     if page.find(id="Quests"):
-        quests = page.find(id="Quests").find_parent("h2").find_next_sibling("ul").find_all("li")
+        quests = page.find(id="Quests").find_parent(
+            "h2").find_next_sibling("ul").find_all("li")
         quests_string = ""
         for quest in quests:
             text = quest.get_text()
@@ -648,7 +656,8 @@ async def quest(ctx, *, args: str):
                 text = text.replace("in raid", "**in raid**")
             quests_string += text + "\n"
         if len(quests_string) > 1024:
-            embed.add_field(name="Quests", value=f"Too many quests to show, see more [here]({r.url + '#Quests'})", inline=False)
+            embed.add_field(
+                name="Quests", value=f"Too many quests to show, see more [here]({r.url + '#Quests'})", inline=False)
         else:
             embed.add_field(name="Quests", value=quests_string, inline=False)
 
@@ -664,7 +673,8 @@ async def quest(ctx, *, args: str):
                 for use in uses:
                     uses_string += use.get_text() + "\n"
             if len(uses_string) > 1024:
-                embed.add_field(name="Hideout", value=f"Too many hideout uses to show, see more [here]({r.url + '#Hideout'})", inline=False)
+                embed.add_field(
+                    name="Hideout", value=f"Too many hideout uses to show, see more [here]({r.url + '#Hideout'})", inline=False)
             else:
                 embed.add_field(name="Hideout", value=uses_string, inline=False)
 
@@ -674,7 +684,8 @@ async def quest(ctx, *, args: str):
     if page.find(id="Trading"):
         # If the Trading tab is empty, skip it
         try:
-            trades = page.find(id="Trading").find_parent("h2").find_next_sibling("table", class_="wikitable").find_all("tr")
+            trades = page.find(id="Trading").find_parent("h2").find_next_sibling(
+                "table", class_="wikitable").find_all("tr")
         except AttributeError:
             pass
         else:
@@ -692,14 +703,16 @@ async def quest(ctx, *, args: str):
                 previous_level = trader_level
                 trades_string += f"{barter_in} -> {barter_out}\n"
             if len(trades_string) > 1024:
-                embed.add_field(name="Trading", value=f"Too many trades to show, see more [here]({r.url + '#Trading'})", inline=False)
+                embed.add_field(
+                    name="Trading", value=f"Too many trades to show, see more [here]({r.url + '#Trading'})", inline=False)
             else:
                 embed.add_field(name="Trading", value=trades_string, inline=False)
 
     if page.find(id="Crafting"):
         # If the Crafting tab is empty, skip it
         try:
-            crafts = page.find(id="Crafting").find_parent("h2").find_next_sibling("table", class_="wikitable").find_all("tr")
+            crafts = page.find(id="Crafting").find_parent("h2").find_next_sibling(
+                "table", class_="wikitable").find_all("tr")
         except AttributeError:
             pass
         else:
@@ -716,18 +729,21 @@ async def quest(ctx, *, args: str):
                 previous_station = station
                 crafts_string += f"{time}: {craft_in} -> {craft_out}\n"
             if len(crafts_string) > 1024:
-                embed.add_field(name="Crafting", value=f"Too many crafts to show, see more [here]({r.url + '#Crafting'})", inline=False)
+                embed.add_field(
+                    name="Crafting", value=f"Too many crafts to show, see more [here]({r.url + '#Crafting'})", inline=False)
             else:
                 embed.add_field(name="Crafting", value=crafts_string, inline=False)
 
     # Check for icon
     icon = None
     if page.find("td", class_="va-infobox-icon"):
-        icon = page.find("td", class_="va-infobox-icon").find("a", class_="image").get("href")
+        icon = page.find("td", class_="va-infobox-icon").find("a",
+                                                              class_="image").get("href")
     else:
         # TODO: Make it so that it retries until it finds an item
         if page.find("td", class_="va-infobox-mainimage-image"):
-            icon = page.find("td", class_="va-infobox-mainimage-image").find("a", class_="image").get("href")
+            icon = page.find(
+                "td", class_="va-infobox-mainimage-image").find("a", class_="image").get("href")
         embed.set_footer(text="This might not be an item")
 
     if icon is not None:
@@ -820,7 +836,8 @@ async def moveall(ctx, *, channel: str):
         channel = ctx.guild.get_channel(channel)
     except KeyError:
         # If no alias was found, try to find the channel
-        channel = discord.utils.find(lambda x: x.name == channel, ctx.guild.voice_channels)
+        channel = discord.utils.find(
+            lambda x: x.name == channel, ctx.guild.voice_channels)
 
     if channel is None:
         await ctx.message.add_reaction(no)
@@ -890,7 +907,8 @@ async def roleleaderboard(ctx, arg: str = None):
         roles = {}
         for member in members_list:
             roles[member.display_name] = len(member.roles)
-        sorted_list = {k: v for k, v in sorted(roles.items(), key=lambda item: item[1], reverse=True)}
+        sorted_list = {k: v for k, v in sorted(
+            roles.items(), key=lambda item: item[1], reverse=True)}
         embed = discord.Embed(colour=discord.Colour.gold())
         value_string = ""
         role_place = 1
@@ -964,12 +982,6 @@ async def r34_error(ctx, error):
 async def close(ctx):
     ctx.add_reaction("👋")
     await bot.close()
-
-
-async def main():
-    await bot.login(token)
-    await bot.register_application_commands()
-    await bot.connect()
 
 
 bot.run(token)
