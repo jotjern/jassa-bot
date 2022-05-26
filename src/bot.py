@@ -1,5 +1,6 @@
 import asyncio
 import hashlib
+import base64
 import io
 import json
 import logging
@@ -291,6 +292,7 @@ async def jassa(ctx, args):
                 raise e
             logger.info(f"Successfully generated gif with {args} in {time.time()-start_time} seconds")
 
+            os.remove(filename)
             await ctx.send(file=discord.File(optimized))
 
 
@@ -299,6 +301,115 @@ async def jassa_error(ctx, error):
     if isinstance(error, commands.MissingRequiredArgument):
         await ctx.message.add_reaction(no)
         await ctx.send(f"Mangler navn (eller noe annet).\nRiktig bruk: `{prefix}jasså <navn>`")
+
+
+@bot.command(aliases=["jassåaudio", "ja"])
+async def jassaaudio(ctx, args, voice: str = "en_us_001"):
+    await ctx.message.add_reaction(ok)
+    async with ctx.channel.typing():
+        name = hashlib.md5(args.encode()).hexdigest()
+        filename = "/jassa-bot/output/" + name + ".mp4"
+        mp3 = "/jassa-bot/output/" + name + ".mp3"
+        out = "/jassa-bot/output/" + name + "_" + voice + ".mp4"
+
+        if os.path.isfile(out):
+            logger.info("mp4 exists, sending file")
+            await ctx.send(file=discord.File(out))
+        else:
+            start_time = time.time()
+            logger.info("Making new mp4")
+            # Generate mp4 with text
+            try:
+                (
+                    ffmpeg
+                    .input('media/template.mp4')
+                    .drawtext(fontfile="ProximaNova-Semibold.otf", text=args, x=160, y=656, fontsize=32.5, fontcolor="white", enable="between(t,0.5,5)")
+                    .filter('fps', fps=19)
+                    .filter('scale', "400", "trunc(ow/a/2)*2", flags="lanczos")
+                    .output(filename)
+                    .run(quiet=True, overwrite_output=True)
+                )
+            except ffmpeg.Error as e:
+                print('stdout:', e.stdout.decode('utf8'))
+                print('stderr:', e.stderr.decode('utf8'))
+                raise e
+            # Get audio an add it to mp4 (https://github.com/oscie57/tiktok-voice)
+            tts_text = f"Jasså {args} er du gira?"
+            tts_text = tts_text.replace("+", "plus")
+            tts_text = tts_text.replace(" ", "+")
+            tts_text = tts_text.replace("&", "and")
+
+            tts_url = f"https://api16-normal-useast5.us.tiktokv.com/media/api/text/speech/invoke/?text_speaker={voice}&req_text={tts_text}&speaker_map_type=0"
+
+            r = requests.post(tts_url)
+
+            vstr = [r.json()["data"]["v_str"]][0]
+            msg = [r.json()["message"]][0]
+
+            logger.info(f"{msg}")
+            if msg != "success":
+                await ctx.message.remove_reaction(ok, bot.user)
+                await ctx.message.add_reaction(no)
+                await ctx.send(f"{msg}")
+                return
+
+            b64d = base64.b64decode(vstr)
+
+            with open(mp3, "wb") as f:
+                f.write(b64d)
+
+            input_vid = ffmpeg.input(filename)
+            input_audio = ffmpeg.input(mp3)
+
+            try:
+                (
+                    ffmpeg
+                    .concat(input_vid, input_audio, v=1, a=1)
+                    .output(out)
+                    .run(quiet=True, overwrite_output=True)
+                )
+            except ffmpeg.Error as e:
+                print('stdout:', e.stdout.decode('utf8'))
+                print('stderr:', e.stderr.decode('utf8'))
+                raise e
+
+            logger.info(
+                f"Successfully generated mp4 with audio {args} in {time.time()-start_time} seconds")
+
+            os.remove(filename)
+            os.remove(mp3)
+            await ctx.send(file=discord.File(out))
+
+
+@jassaaudio.error
+async def jassaaudio_error(ctx, error):
+    if isinstance(error, commands.MissingRequiredArgument):
+        await ctx.message.add_reaction(no)
+        await ctx.send(f"Mangler navn (eller noe annet).\nRiktig bruk: `{prefix}jassåaudio <navn>`")
+
+
+# TODO: This only works with Novus
+# @bot.command(
+#     application_command_meta=commands.ApplicationCommandMeta(
+#         options=[
+#             discord.ApplicationCommandOption(
+#                 name="text",
+#                 type=discord.ApplicationCommandOptionType.string,
+#                 description="The text to be read aloud by TikTok TTS"
+#             ),
+#             discord.ApplicationCommandOption(
+#                 name="voice",
+#                 type=discord.ApplicationCommandOptionType.string,
+#                 description="The voice to be used by TikTok TTS",
+#                 default="en_us_001",
+#                 required=False,
+#                 choices=
+#             )
+#         ]
+#     )
+# )
+# async def tts(ctx, text: str, voice: str):
+#     await ctx.send("Waow")
 
 
 @bot.command(aliases=["activites", "activity"])
@@ -853,6 +964,12 @@ async def r34_error(ctx, error):
 async def close(ctx):
     ctx.add_reaction("👋")
     await bot.close()
+
+
+async def main():
+    await bot.login(token)
+    await bot.register_application_commands()
+    await bot.connect()
 
 
 bot.run(token)
